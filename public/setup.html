@@ -12,7 +12,7 @@
   header{max-width:860px;margin:0 auto;padding:28px 0 8px}
   header h1{font-size:26px}header p{color:var(--soft);font-size:15px}
   .steps{max-width:860px;margin:14px auto 22px;display:flex;gap:6px;flex-wrap:wrap}
-  .steps span{flex:1;min-width:110px;font-size:13px;font-weight:600;padding:9px 10px;border-radius:10px;background:#e9e7e1;color:var(--mute);text-align:center;cursor:default}
+  .steps span{flex:1;min-width:88px;font-size:13px;font-weight:600;padding:9px 6px;white-space:nowrap;border-radius:10px;background:#e9e7e1;color:var(--mute);text-align:center;cursor:default}
   .steps span.on{background:var(--ink);color:#fff}.steps span.done{background:#dcfce7;color:var(--ok);cursor:pointer}
   .card{max-width:860px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:22px;padding:clamp(20px,4vw,36px)}
   h2{font-size:22px;margin-bottom:6px}.lead{color:var(--soft);margin-bottom:18px}
@@ -63,11 +63,15 @@
   details.way summary::before{content:"";width:8px;height:8px;border-right:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:rotate(-45deg);transition:transform .2s;margin-right:4px}
   details.way[open] summary::before{transform:rotate(45deg)}
   details.way summary b{font-size:16px}details.way summary span{font-size:13px;color:var(--mute)}
+  .flexprev{max-width:300px;border:1px solid var(--line);border-radius:16px;padding:16px;background:#fff;box-shadow:0 14px 34px -22px rgba(11,11,13,.4)}
+  .flexprev small{display:block;font-size:12px;font-weight:700;color:var(--accent)}.flexprev b{display:block;font-size:19px;margin:2px 0 10px}
+  .flexprev .r{display:grid;grid-template-columns:48px 1fr;gap:8px;font-size:13px;padding:3px 0}.flexprev .r span:first-child{color:var(--mute)}
+  .flexprev i{display:block;margin-top:12px;font-style:normal;text-align:center;color:#fff;font-weight:700;font-size:14px;border-radius:8px;padding:9px;background:var(--accent)}
   [hidden]{display:none!important}
 </style>
 </head>
 <body>
-<header><h1>設定精靈</h1><p>照著做，大約 20 分鐘。每一步都會存起來，中途關掉也能回來繼續。</p></header>
+<header><h1>設定精靈</h1><p>所有需要的設定和金鑰都在這裡完成，不用改任何檔案。每一步都會存起來、存完立刻生效；最後一步會實際檢查一次，確認真的能用。</p></header>
 <div class="steps" id="steps"></div>
 
 <main class="card">
@@ -90,7 +94,7 @@
 
   <!-- 1 密碼 -->
   <section data-step="password" hidden>
-    <h2>第 1 步　設定後台密碼</h2>
+    <h2>設定後台密碼</h2>
     <p class="lead">之後進後台都要用這組密碼。請設一組別人猜不到的，至少 10 個字。</p>
     <div id="pwNew">
       <label>設定碼（6 位數字）</label>
@@ -106,9 +110,23 @@
     <div class="nav"><button data-back>上一步</button><button class="primary" id="n1">下一步</button></div>
   </section>
 
+  <!-- 品牌 -->
+  <section data-step="brand" hidden>
+    <h2>品牌與顯示</h2>
+    <p class="lead">這些會出現在卡片、邀請頁和機器人的名字上。都有預設值，不確定的先不用改。</p>
+    <div class="row" style="grid-template-columns:1fr 1fr"><div><label>品牌名稱</label><input id="bName" maxlength="40" placeholder="例如：某某設計"></div><div><label>主辦單位（卡片上「主辦」那一列的預設值）</label><input id="bOrg" maxlength="60" placeholder="可以留空，每場會議再各自填"></div></div>
+    <div class="row" style="grid-template-columns:1fr 1fr"><div><label>主色</label><div style="display:grid;grid-template-columns:54px 1fr;gap:8px"><input id="bColorPick" type="color" style="padding:4px;height:46px"><input id="bColor" maxlength="7" placeholder="#0EA5E9"></div></div><div><label>時區</label><select id="bTz"></select></div></div>
+    <label>機器人在會議裡顯示的名字</label><input id="bBot" maxlength="60" placeholder="留空＝「品牌名稱・會議記錄」">
+    <p class="cap">建議寫清楚是誰家的、來做什麼，與會者看到陌生帳號進來才不會緊張。</p>
+    <h3>卡片預覽</h3>
+    <div class="flexprev" id="prev"><small id="pvLabel">會議邀請</small><b>九月產品會議</b><div class="r"><span>時間</span><span id="pvWhen">2026/9/25（五）19:00–21:00</span></div><div class="r"><span>地點</span><span>線上會議</span></div><div class="r"><span>主辦</span><span id="pvOrg">—</span></div><i id="pvBtn">前往會議</i></div>
+    <p class="msg" id="mB"></p>
+    <div class="nav"><button data-back>上一步</button><button class="primary" id="nB">存起來，下一步</button></div>
+  </section>
+
   <!-- 2 網址 -->
   <section data-step="url" hidden>
-    <h2>第 2 步　確認對外網址</h2>
+    <h2>確認對外網址</h2>
     <p class="lead">卡片上的按鈕、LINE 的設定，都要用到你這個服務的網址，而且 LINE 只接受 <b>https</b>。</p>
     <label>對外網址</label><input id="pub" placeholder="https://你的網址">
     <p class="cap">我先幫你填了現在瀏覽器上的網址。</p>
@@ -163,7 +181,7 @@
 
   <!-- 3 LINE -->
   <section data-step="line" hidden>
-    <h2>第 3 步　綁定 LINE</h2>
+    <h2>綁定 LINE</h2>
     <p class="lead">要讓卡片能在 LINE 裡「選人傳送」，需要在 LINE Developers 建立一個 LIFF，再把它的 LIFF ID 貼回來。下面的圖是照 LINE 後台版面畫的示意圖，實際畫面可能因改版略有不同。</p>
     <ol class="how">
       <li>打開 <a href="https://developers.line.biz/console/" target="_blank" rel="noopener">LINE Developers Console</a>，用你的 LINE 帳號登入，按 <b>Create a new provider</b>，名稱填公司或自己的名字。
@@ -194,32 +212,33 @@
 
   <!-- 4 Recall -->
   <section data-step="recall" hidden>
-    <h2>第 4 步　會議機器人（可以先跳過）</h2>
+    <h2>會議機器人（可以先跳過）</h2>
     <p class="lead">想讓機器人自動進 Zoom／Google Meet／Teams 記錄，才需要這一步。只想用資訊卡的話直接跳過。</p>
     <div class="notice"><b>再提醒一次</b><ul><li>請不要未經公司允許，擅自用在公司的客戶會議上。客戶與會議內容有可能屬於公司的機密資產。</li><li>機器人進會議會錄音，請事先告知所有與會者。</li></ul></div>
     <ol class="how">
       <li>到 <a href="https://www.recall.ai" target="_blank" rel="noopener">recall.ai</a> 註冊。自己申請、用多少付多少的帳號在 <b>us-west-2（Pay-as-you-go）</b> 這一區；費用依機器人在會議裡的時數計算，實際價格請看他們官網。</li>
-      <li>登入後打開 API Keys 頁面（選你帳號所在的區域）：
+      <li>登入後打開 API Keys 頁面。自己申請的帳號通常在下面這個網址；如果你的帳號在別的區域，登入後從左邊選單的 <b>Developers → API Keys</b> 進去也一樣：
         <div class="copy"><span id="rk">https://us-west-2.recall.ai/dashboard/developers/api-keys</span><button type="button" data-open="rk">打開</button></div>
         <div class="shot"><div class="bar"><i></i><i></i><i></i><span>us-west-2.recall.ai/dashboard/developers/api-keys</span></div><div class="body"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><b>API Keys</b><span class="btn dark hl">Generate API Key</span></div><div class="f"><small>my-key</small><span>••••••••••••a1b2</span></div></div></div></li>
       <li>按 <b>Generate API Key</b>，把整串金鑰複製下來（只會顯示一次），貼到下面，按「測試金鑰」。</li>
     </ol>
-    <div class="row"><div><label>區域</label><select id="region"></select></div><span></span></div>
     <div class="row"><div><label>Recall API Key</label><input id="rkey" type="password" autocomplete="off" placeholder="貼上金鑰"></div><button type="button" id="rtest">測試金鑰</button></div>
+    <p class="cap">不用自己選區域。按「測試金鑰」會自動找出你的帳號在哪一區。</p>
     <p class="cap" id="rhint"></p>
+    <select id="region" hidden></select>
     <p class="msg" id="m4"></p>
     <div class="nav"><button data-back>上一步</button><span><button id="s4">先跳過</button>　<button class="primary" id="n4">存起來，下一步</button></span></div>
   </section>
 
   <!-- 5 AI -->
   <section data-step="ai" hidden>
-    <h2>第 5 步　AI 會後摘要（可以先跳過）</h2>
+    <h2>AI 會後摘要（可以先跳過）</h2>
     <p class="lead">有填的話，會議結束後會自動整理重點、完整摘要與待辦事項。沒填就只保留逐字稿。</p>
     <ol class="how">
       <li>用 OpenAI 的話，到 <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a> 建立一組金鑰，貼到下面就好，其他兩欄不用動。</li>
       <li>用其他相容 OpenAI 格式的服務（OpenRouter、自己架的 OneAPI 或 Ollama），把「API 網址」和「模型」改成對應的值。</li>
     </ol>
-    <label>API Key</label><input id="lkey" type="password" autocomplete="off" placeholder="貼上金鑰">
+    <div class="row"><div><label>API Key</label><input id="lkey" type="password" autocomplete="off" placeholder="貼上金鑰"></div><button type="button" id="ltest">測試金鑰</button></div>
     <p class="cap" id="lhint"></p>
     <div class="row" style="grid-template-columns:1fr 1fr"><div><label>API 網址</label><input id="lbase"></div><div><label>模型</label><input id="lmodel"></div></div>
     <p class="msg" id="m5"></p>
@@ -228,56 +247,101 @@
 
   <!-- 6 完成 -->
   <section data-step="done" hidden>
-    <h2>設定完成</h2>
-    <p class="lead">現在可以到後台建立第一場會議，按「複製 LINE 分享連結」，貼到 LINE 用手機點開，就能選人傳送。</p>
+    <h2 id="doneTitle">最後檢查</h2>
+    <p class="lead" id="doneLead">每一項都實際試一次，確認精靈結束後真的能用。</p>
     <ul id="sum" style="list-style:none;display:grid;gap:8px;margin:10px 0 0"></ul>
+    <div id="tryBox" hidden>
+      <h3>最後一關：用手機實際傳一張卡</h3>
+      <p class="cap">前面都是程式能替你檢查的。LINE 後台的三個設定（Endpoint URL、Share target picker、Published）只有實際傳一次才知道對不對。</p>
+      <ol class="how">
+        <li>按下面的按鈕，建立一場測試會議並複製分享連結。<div style="margin-top:8px"><button type="button" class="primary" id="mkSample">建立測試會議，複製分享連結</button></div>
+          <div class="copy" id="sampleBox" hidden><span id="sampleUrl"></span><button type="button" data-copy="sampleUrl">複製</button></div></li>
+        <li>把連結貼到 LINE 的任何聊天室（傳給自己的「Keep 筆記」最方便），<b>用手機點開</b>。</li>
+        <li>畫面跳出「選擇傳送對象」，選一個人傳送，對方收到卡片，就完成了。</li>
+      </ol>
+      <p class="cap">沒跳出選人畫面？分享頁下方的灰色小字會寫原因；最常見的是 Endpoint URL 和這裡的對外網址不一樣，或 Share target picker 沒打開。</p>
+    </div>
     <p class="cap" style="margin-top:14px">之後想改任何一項，隨時回到這一頁（後台右上角的「設定」）。</p>
-    <div class="nav"><button data-back>上一步</button><button class="primary" onclick="location.href='/admin.html'">進入後台</button></div>
+    <div class="nav"><button data-back>上一步</button><span><button type="button" id="recheck">重新檢查</button>　<button class="primary" id="toAdmin" onclick="location.href='/admin.html'">進入後台</button></span></div>
   </section>
 </main>
 
 <script>
-var KEY='lmc_admin_token',TOKEN='',ORDER=['notice','password','url','line','recall','ai','done'],NAMES=['使用提醒','後台密碼','對外網址','綁定 LINE','會議機器人','AI 摘要','完成'],cur=0,S=null;
+var KEY='lmc_admin_token',TOKEN='',S=null,cur=0;
+var STEPS=[['notice','使用提醒'],['password','後台密碼'],['brand','品牌'],['url','對外網址'],['line','綁定 LINE'],['recall','機器人'],['ai','AI 摘要'],['done','最後檢查']];
+var TZS=['Asia/Taipei','Asia/Hong_Kong','Asia/Tokyo','Asia/Seoul','Asia/Singapore','Asia/Kuala_Lumpur','Asia/Bangkok','Australia/Sydney','Europe/London','Europe/Berlin','America/New_York','America/Los_Angeles','UTC'];
 function $(id){return document.getElementById(id);}
 function msg(id,t,kind){var e=$(id);e.textContent=t||'';e.className='msg '+(kind||'');}
 function api(method,url,body){return fetch(url,{method:method,headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:body?JSON.stringify(body):undefined}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||('錯誤 '+r.status));return j;});});}
-function show(i){cur=i;ORDER.forEach(function(n,k){document.querySelector('[data-step="'+n+'"]').hidden=k!==i;});
-  $('steps').innerHTML='';NAMES.forEach(function(n,k){var s=document.createElement('span');s.textContent=(k?k+'　':'')+n;s.className=k===i?'on':(k<i?'done':'');if(k<i)s.onclick=function(){show(k);};$('steps').appendChild(s);});scrollTo({top:0,behavior:'smooth'});}
+function idx(name){for(var i=0;i<STEPS.length;i++)if(STEPS[i][0]===name)return i;return 0;}
+function go(name){var i=typeof name==='number'?name:idx(name);cur=i;
+  STEPS.forEach(function(s,k){document.querySelector('[data-step="'+s[0]+'"]').hidden=k!==i;});
+  $('steps').innerHTML='';STEPS.forEach(function(s,k){var e=document.createElement('span');e.textContent=(k?k+'　':'')+s[1];e.className=k===i?'on':(k<i?'done':'');if(k<i)e.onclick=function(){go(k);};$('steps').appendChild(e);});
+  scrollTo({top:0,behavior:'smooth'});if(STEPS[i][0]==='done')runCheck();}
+function next(){go(cur+1);}
+
 function fill(){ if(!S)return; var v=S.settings;
   $('pub').value=v.PUBLIC_URL.value||location.origin; $('liff').value=v.LIFF_ID.value||'';
   $('ep').textContent=$('epShot').textContent=S.endpoint_url; $('ack').checked=v.ack_confidential; $('n0').disabled=!$('ack').checked;
+  $('bName').value=v.BRAND_NAME.value||''; $('bOrg').value=v.ORGANIZER_NAME.value||''; $('bColor').value=$('bColorPick').value=v.ACCENT_COLOR.value||'#0EA5E9'; $('bBot').value=v.BOT_NAME.value||'';
+  var tz=v.TIMEZONE.value||'Asia/Taipei',list=TZS.indexOf(tz)<0?[tz].concat(TZS):TZS; $('bTz').innerHTML=list.map(function(z){return '<option'+(z===tz?' selected':'')+'>'+z+'</option>';}).join('');
   $('region').innerHTML=S.regions.map(function(r){return '<option'+(r===v.RECALL_REGION.value?' selected':'')+'>'+r+'</option>';}).join('');
-  $('rhint').textContent=v.RECALL_API_KEY.set?('目前已設定（'+v.RECALL_API_KEY.hint+'）。留空＝不變。'+(v.RECALL_API_KEY.locked?' 這一項由 .env 決定，要改請改 .env。':'')):'';
+  $('rhint').textContent=v.RECALL_API_KEY.set?('目前已設定（'+v.RECALL_API_KEY.hint+'・'+v.RECALL_REGION.value+'）。留空＝不變。'+(v.RECALL_API_KEY.locked?' 這一項由 .env 決定，要改請改 .env。':'')):'';
   $('lhint').textContent=v.LLM_API_KEY.set?('目前已設定（'+v.LLM_API_KEY.hint+'）。留空＝不變。'):'';
-  $('lbase').value=v.LLM_BASE_URL.value; $('lmodel').value=v.LLM_MODEL.value; regionLink(); }
-function regionLink(){ $('rk').textContent='https://'+$('region').value+'.recall.ai/dashboard/developers/api-keys'; }
+  $('lbase').value=v.LLM_BASE_URL.value; $('lmodel').value=v.LLM_MODEL.value; preview(); }
+function preview(){ var c=$('bColor').value;if(!/^#[0-9a-fA-F]{6}$/.test(c))c='#0EA5E9';
+  $('pvLabel').style.color=c;$('pvBtn').style.background=c;$('pvOrg').textContent=$('bOrg').value||$('bName').value||'（每場會議各自填）'; }
 function loadSettings(){return api('GET','/api/settings').then(function(j){S=j;fill();return j;});}
 function saveSettings(patch){return api('POST','/api/settings',patch).then(function(j){S.settings=j.settings;S.endpoint_url=j.endpoint_url;S.https=j.https;fill();return j;});}
+function remember(){try{localStorage.setItem(KEY,TOKEN);}catch(e){}}
 
 $('ack').onchange=function(){$('n0').disabled=!this.checked;};
-$('n0').onclick=function(){show(1);};
+$('n0').onclick=next;
 $('n1').onclick=function(){ msg('m1','');
-  if(!$('pwLogin').hidden){TOKEN=$('pw').value;loadSettings().then(function(){try{localStorage.setItem(KEY,TOKEN);}catch(e){}return saveSettings({ack_confidential:true});}).then(function(){show(2);}).catch(function(e){msg('m1',e.message,'bad');});return;}
+  if(!$('pwLogin').hidden){TOKEN=$('pw').value;loadSettings().then(function(){remember();return saveSettings({ack_confidential:true});}).then(next).catch(function(e){msg('m1',e.message,'bad');});return;}
   if($('pw1').value!==$('pw2').value)return msg('m1','兩次輸入的密碼不一樣','bad');
-  api('POST','/api/setup/password',{setup_code:$('code').value,password:$('pw1').value}).then(function(){TOKEN=$('pw1').value;try{localStorage.setItem(KEY,TOKEN);}catch(e){}return loadSettings();}).then(function(){return saveSettings({ack_confidential:true});}).then(function(){show(2);}).catch(function(e){msg('m1',e.message,'bad');}); };
-$('n2').onclick=function(){ var u=$('pub').value.trim(); saveSettings({PUBLIC_URL:u}).then(function(){ if(!S.https){msg('m2','已存。這不是 https 網址，所以還不能分享到 LINE；其他功能可以先在本機試。','warn');setTimeout(function(){show(3);},1800);} else show(3); }).catch(function(e){msg('m2',e.message,'bad');}); };
-$('n3').onclick=function(){ saveSettings({LIFF_ID:$('liff').value}).then(function(){ if(!S.settings.LIFF_ID.value)return msg('m3','還沒填 LIFF ID。沒有它就不能分享到 LINE。','bad'); show(4); }).catch(function(e){msg('m3',e.message,'bad');}); };
-$('region').onchange=regionLink;
-$('rtest').onclick=function(){ msg('m4','測試中…'); api('POST','/api/settings/test-recall',{api_key:$('rkey').value,region:$('region').value}).then(function(j){msg('m4',j.ok?'金鑰可以用。':j.reason,j.ok?'ok':'bad');}).catch(function(e){msg('m4',e.message,'bad');}); };
-$('n4').onclick=function(){ var p={RECALL_REGION:$('region').value}; if($('rkey').value.trim())p.RECALL_API_KEY=$('rkey').value.trim(); saveSettings(p).then(function(){$('rkey').value='';show(5);}).catch(function(e){msg('m4',e.message,'bad');}); };
-$('s4').onclick=function(){show(5);};
-$('n5').onclick=function(){ var p={LLM_BASE_URL:$('lbase').value,LLM_MODEL:$('lmodel').value}; if($('lkey').value.trim())p.LLM_API_KEY=$('lkey').value.trim(); saveSettings(p).then(function(){$('lkey').value='';done();}).catch(function(e){msg('m5',e.message,'bad');}); };
-$('s5').onclick=done;
-function done(){ var v=S.settings,rows=[['後台密碼',true,'已設定'],['對外網址',S.https,v.PUBLIC_URL.value+(S.https?'':'（不是 https，LINE 不會接受）')],['綁定 LINE',!!v.LIFF_ID.value,v.LIFF_ID.value||'還沒填'],['會議機器人',v.RECALL_API_KEY.set,v.RECALL_API_KEY.set?'已設定・'+v.RECALL_REGION.value:'未設定（只用資訊卡）'],['AI 摘要',v.LLM_API_KEY.set,v.LLM_API_KEY.set?'已設定・'+v.LLM_MODEL.value:'未設定（只保留逐字稿）']];
-  $('sum').innerHTML='';rows.forEach(function(r){var li=document.createElement('li');li.style.cssText='display:grid;grid-template-columns:110px 1fr;gap:10px;padding:10px 14px;border-radius:12px;background:'+(r[1]?'#f0fdf4':'#f8f7f4');var b=document.createElement('b');b.textContent=r[0];var s=document.createElement('span');s.textContent=r[2];s.style.color=r[1]?'#15803d':'#9a978f';li.append(b,s);$('sum').appendChild(li);});show(6); }
-document.addEventListener('click',function(e){var b=e.target.closest('[data-back]');if(b){show(Math.max(0,cur-1));return;}
+  api('POST','/api/setup/password',{setup_code:$('code').value,password:$('pw1').value}).then(function(){TOKEN=$('pw1').value;remember();$('pwNew').hidden=true;$('pwLogin').hidden=false;$('pw').value=TOKEN;return loadSettings();}).then(function(){return saveSettings({ack_confidential:true});}).then(next).catch(function(e){msg('m1',e.message,'bad');}); };
+['bName','bOrg','bColor'].forEach(function(id){$(id).oninput=preview;});
+$('bColorPick').oninput=function(){$('bColor').value=this.value;preview();};
+$('nB').onclick=function(){ saveSettings({BRAND_NAME:$('bName').value,ORGANIZER_NAME:$('bOrg').value,ACCENT_COLOR:$('bColor').value,TIMEZONE:$('bTz').value,BOT_NAME:$('bBot').value}).then(function(){document.documentElement.style.setProperty('--accent',S.settings.ACCENT_COLOR.value);next();}).catch(function(e){msg('mB',e.message,'bad');}); };
+$('n2').onclick=function(){ saveSettings({PUBLIC_URL:$('pub').value.trim()}).then(function(){ if(!S.https){msg('m2','已存。這不是 https 網址，所以還不能分享到 LINE；其他功能可以先在本機試。','warn');setTimeout(next,1800);} else next(); }).catch(function(e){msg('m2',e.message,'bad');}); };
+$('n3').onclick=function(){ saveSettings({LIFF_ID:$('liff').value}).then(function(){ if(!S.settings.LIFF_ID.value)return msg('m3','還沒填 LIFF ID。沒有它就不能分享到 LINE。','bad'); next(); }).catch(function(e){msg('m3',e.message,'bad');}); };
+/* Recall：測試時自動找出金鑰屬於哪一區，使用者不用自己選 */
+function testRecall(){ msg('m4','測試中，正在找你的帳號在哪一區…'); return api('POST','/api/settings/test-recall',{api_key:$('rkey').value}).then(function(j){ if(j.ok){$('region').value=j.region;msg('m4','金鑰可以用。你的帳號在 '+j.region+' 區，已經幫你選好。','ok');} else msg('m4',j.reason,'bad'); return j; }).catch(function(e){msg('m4',e.message,'bad');return {ok:false};}); }
+$('rtest').onclick=testRecall;
+$('n4').onclick=function(){ var key=$('rkey').value.trim(); if(!key&&!S.settings.RECALL_API_KEY.set)return msg('m4','還沒貼金鑰。不需要機器人的話請按「先跳過」。','bad');
+  (key?testRecall():Promise.resolve({ok:true,region:$('region').value})).then(function(t){ if(!t.ok)return; var p={RECALL_REGION:t.region||$('region').value}; if(key)p.RECALL_API_KEY=key; return saveSettings(p).then(function(){$('rkey').value='';next();}); }).catch(function(e){msg('m4',e.message,'bad');}); };
+$('s4').onclick=next;
+function testLlm(){ msg('m5','測試中…'); return api('POST','/api/settings/test-llm',{api_key:$('lkey').value,base_url:$('lbase').value,model:$('lmodel').value}).then(function(j){msg('m5',j.ok?'金鑰、網址、模型都沒問題。':j.reason,j.ok?'ok':'bad');return j;}).catch(function(e){msg('m5',e.message,'bad');return {ok:false};}); }
+$('ltest').onclick=testLlm;
+$('n5').onclick=function(){ var key=$('lkey').value.trim(); if(!key&&!S.settings.LLM_API_KEY.set)return msg('m5','還沒貼金鑰。不需要 AI 摘要的話請按「先跳過」。','bad');
+  testLlm().then(function(t){ if(!t.ok)return; var p={LLM_BASE_URL:$('lbase').value,LLM_MODEL:$('lmodel').value}; if(key)p.LLM_API_KEY=key; return saveSettings(p).then(function(){$('lkey').value='';next();}); }).catch(function(e){msg('m5',e.message,'bad');}); };
+$('s5').onclick=next;
+
+/* 最後檢查：每一項都由伺服器實際試一次 */
+function runCheck(){ var box=$('sum');box.innerHTML='';$('tryBox').hidden=true;$('doneTitle').textContent='最後檢查';$('doneLead').textContent='檢查中，每一項都實際試一次…';
+  api('GET','/api/settings/check').then(function(j){ box.innerHTML='';
+    j.checks.forEach(function(c){ var li=document.createElement('li');li.style.cssText='display:grid;grid-template-columns:110px 1fr auto;gap:10px;align-items:center;padding:11px 14px;border-radius:12px;background:'+(c.ok?'#f0fdf4':'#fef2f2');
+      var b=document.createElement('b');b.textContent=c.name;var t=document.createElement('span');t.textContent=c.text;t.style.color=c.ok?'#15803d':'#b91c1c';t.style.fontSize='14.5px';li.append(b,t);
+      if(!c.ok&&c.fix){var f=document.createElement('button');f.type='button';f.textContent='去修正';f.style.cssText='padding:7px 12px;font-size:13px';f.onclick=function(){go(c.fix);};li.appendChild(f);} else li.appendChild(document.createElement('span'));
+      box.appendChild(li); });
+    if(j.ready){$('doneTitle').textContent='設定完成，可以開始用了';$('doneLead').textContent='程式能檢查的項目全部通過。';}
+    else if(j.share_ready){$('doneTitle').textContent='可以開始分享資訊卡了';$('doneLead').textContent='必要的項目都通過了；紅色的是選用功能，修好之後才會啟用。';}
+    else {$('doneTitle').textContent='還有項目要處理';$('doneLead').textContent='紅色的項目處理完，才算真的能用。按「去修正」會帶你回到那一步。';}
+    $('tryBox').hidden=!j.share_ready;
+  }).catch(function(e){$('doneLead').textContent='檢查失敗：'+e.message;}); }
+$('recheck').onclick=runCheck;
+$('mkSample').onclick=function(){ api('POST','/api/settings/sample-meeting').then(function(j){ var u=j.meeting.share_invite_url;$('sampleUrl').textContent=u;$('sampleBox').hidden=false;navigator.clipboard.writeText(u).then(function(){$('mkSample').textContent='已複製，貼到 LINE 用手機點開';},function(){}); }).catch(function(e){alert(e.message);}); };
+
+document.addEventListener('click',function(e){var b=e.target.closest('[data-back]');if(b){go(Math.max(0,cur-1));return;}
   var c=e.target.closest('[data-copy]');if(c){navigator.clipboard.writeText($(c.dataset.copy).textContent).then(function(){c.textContent='已複製';setTimeout(function(){c.textContent='複製';},1500);});return;}
   var o=e.target.closest('[data-open]');if(o)open($(o.dataset.open).textContent,'_blank','noopener');});
 
 fetch('/api/config').then(function(r){return r.json();}).then(function(c){ document.documentElement.style.setProperty('--accent',c.accent);
   $('localTip').hidden=!/^(localhost|127\.|\[::1\])/.test(location.hostname);$('pwNew').hidden=!c.needs_setup;$('pwLogin').hidden=c.needs_setup; $('pub').value=location.origin;
   try{TOKEN=localStorage.getItem(KEY)||'';}catch(e){}
-  if(!c.needs_setup&&TOKEN)loadSettings().then(function(){show(S.settings.ack_confidential?(!S.settings.LIFF_ID.value?3:2):0);}).catch(function(){TOKEN='';show(0);}); else show(0); });
+  /* 回來繼續設定的人：直接帶到第一個還沒完成的地方；都完成了就到最後檢查 */
+  if(!c.needs_setup&&TOKEN)loadSettings().then(function(){var v=S.settings;go(!v.ack_confidential?'notice':(!S.https?'url':(!v.LIFF_ID.value?'line':'done')));}).catch(function(){TOKEN='';go(0);}); else go(0); });
 </script>
 </body>
 </html>

@@ -53,7 +53,7 @@ LIFF 必須掛在 **LINE Login** 這種 channel 底下。不是 Messaging API，
    | Scan QR | 不用開 | |
    | Module mode | 不用開 | |
 
-3. 按 **Add**。建好之後列表上會出現 **LIFF ID**，長得像 `1234567890-AbCdEfGh`，複製到 `.env` 的 `LIFF_ID`。
+3. 按 **Add**。建好之後列表上會出現 **LIFF ID**，長得像 `1234567890-AbCdEfGh`，貼回設定精靈「綁定 LINE」那一步。
 
 ### 4. 打開 Share target picker
 
@@ -111,7 +111,7 @@ if (result) liff.closeWindow();
 
 幾個設計上的決定：
 
-- **LIFF ID 由後端給，不寫死在 HTML。** 換 LIFF 只要改 `.env`，不用動前端。
+- **LIFF ID 由後端給，不寫死在 HTML。** 換 LIFF 只要在設定精靈改一個欄位，不用動前端。
 - **`altText` 一定要有。** 它會出現在聊天列表的預覽和推播通知裡，寫成「會議邀請：九月產品會議｜2026/9/25（五）19:00」這種一眼看得懂的句子。
 - **`result` 是空的代表使用者按了取消**，不是錯誤，給他一顆「再試一次」就好。
 - **把錯誤印在畫面上。** 手機上沒有開發者工具，`share.html` 下方那塊灰色小字就是你的除錯畫面。LINE 回的錯誤代碼（例如 `INVALID_ARGUMENT`）幾乎都能直接指出問題。

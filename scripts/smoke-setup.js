@@ -26,6 +26,16 @@ const srv = app.listen(0, async () => {
     ok('存完不用重啟，分享連結就用新的 LIFF ID', mk.meeting.share_invite_url.startsWith('https://liff.line.me/1234567890-AbCdEfGh?invite='), mk);
     const bot = await post(`/api/meetings/${mk.meeting.id}/bot`, {}, PW); const bj = await bot.json();
     ok('沒勾保密提醒之前不能派機器人', bot.status === 400 && /使用提醒/.test(bj.error), bj);
+    const br = await (await post('/api/settings', { BRAND_NAME: '範例設計', ORGANIZER_NAME: '範例設計', ACCENT_COLOR: '#E1306C', TIMEZONE: 'Asia/Tokyo', BOT_NAME: '範例設計・記錄' }, PW)).json();
+    ok('品牌、主色、時區、機器人名稱都能在精靈裡存', br.settings.BRAND_NAME.value === '範例設計' && br.settings.ACCENT_COLOR.value === '#E1306C' && br.settings.TIMEZONE.value === 'Asia/Tokyo' && br.settings.BOT_NAME.value === '範例設計・記錄', br.settings);
+    ok('存完立刻生效（公開設定已經是新的品牌與主色）', await fetch(base + '/api/config').then(r => r.json()).then(c => c.brand === '範例設計' && c.accent === '#E1306C'));
+    ok('亂填的主色、時區會被擋', (await post('/api/settings', { ACCENT_COLOR: 'red' }, PW)).status === 400 && (await post('/api/settings', { TIMEZONE: 'Mars/Base' }, PW)).status === 400);
+    const sm = await (await post('/api/settings/sample-meeting', {}, PW)).json(); const sm2 = await (await post('/api/settings/sample-meeting', {}, PW)).json();
+    ok('一鍵建立測試會議，重複按不會一直多出來', sm.meeting.share_invite_url.includes('?invite=') && sm.meeting.id === sm2.meeting.id, sm);
+    const ck = await (await fetch(base + '/api/settings/check', { headers: { 'x-admin-token': PW } })).json();
+    const by = Object.fromEntries((ck.checks || []).map(c => [c.key, c]));
+    ok('最後檢查：列出每一項、沒勾提醒會被抓到、連不到的對外網址會被抓到', by.password.ok && by.ack.ok === false && by.ack.fix === 'notice' && by.url.ok === false && by.liff.ok && by.ai.optional && ck.share_ready === false, ck);
+    ok('沒登入不能看檢查結果', (await fetch(base + '/api/settings/check')).status === 401);
     ok('勾選保密提醒', (await (await post('/api/settings', { ack_confidential: true }, PW)).json()).settings.ack_confidential === true);
   } catch (e) { console.error(e); fail++; }
   srv.close(); fs.rmSync(tmp, { recursive: true, force: true });

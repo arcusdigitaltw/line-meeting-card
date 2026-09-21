@@ -37,17 +37,26 @@ const srv = app.listen(0, async () => {
   await p.goto(`${base}/setup.html`); await p.waitForTimeout(600);
   await p.check('#ack'); await shot('setup-0-notice', true);
   await p.evaluate(() => document.getElementById('n0').click()); await p.fill('#code', SETUP_CODE); await p.fill('#pw1', PW); await p.fill('#pw2', PW); await shot('setup-1-password', true);
-  await p.evaluate(() => document.getElementById('n1').click()); await p.waitForTimeout(600); await p.fill('#pub', 'https://meet.example.tw');
+  await p.evaluate(() => document.getElementById('n1').click()); await p.waitForTimeout(800);
+  await p.fill('#bName', '範例公司'); await p.fill('#bOrg', '範例公司'); await p.fill('#bColor', '#0EA5E9'); await p.evaluate(() => document.getElementById('bName').dispatchEvent(new Event('input'))); await shot('setup-2-brand', true);
+  await p.evaluate(() => document.getElementById('nB').click()); await p.waitForTimeout(600); await p.fill('#pub', 'https://meet.example.tw');
   // 兩種取得 https 網址的圖解各截一張（教學文件會用到），再截整頁
   await p.evaluate(() => document.querySelectorAll('details.way').forEach(d => { d.open = true; }));
   await p.waitForTimeout(300);
   await p.locator('details.way').nth(0).screenshot({ path: path.join(OUT, 'url-a-quick-tunnel.png') });
   await p.locator('details.way').nth(1).screenshot({ path: path.join(OUT, 'url-b-cloudflare-domain.png') });
-  await shot('setup-2-url', true);
-  await p.evaluate(() => document.getElementById('n2').click()); await p.waitForTimeout(600); await p.fill('#liff', '1234567890-AbCdEfGh'); await shot('setup-3-line', true);
-  await p.evaluate(() => document.getElementById('n3').click()); await p.waitForTimeout(600); await p.fill('#rkey', 'demo-recall-key-a1b2'); await shot('setup-4-recall', true);
-  await p.evaluate(() => document.getElementById('n4').click()); await p.waitForTimeout(900); await p.fill('#lkey', 'demo-llm-key-c3d4'); await shot('setup-5-ai', true);
-  await p.evaluate(() => document.getElementById('n5').click()); await p.waitForTimeout(600); await shot('setup-6-done', true);
+  await shot('setup-3-url', true);
+  await p.evaluate(() => document.getElementById('n2').click()); await p.waitForTimeout(600); await p.fill('#liff', '1234567890-AbCdEfGh'); await shot('setup-4-line', true);
+  // 金鑰是假的，存檔時會被精靈擋下（它會實際去問），所以截圖用「先跳過」往下走
+  await p.evaluate(() => document.getElementById('n3').click()); await p.waitForTimeout(600); await p.fill('#rkey', 'demo-recall-key-a1b2'); await shot('setup-5-recall', true);
+  await p.evaluate(() => document.getElementById('s4').click()); await p.waitForTimeout(600); await p.fill('#lkey', 'demo-llm-key-c3d4'); await shot('setup-6-ai', true);
+  // 最後檢查會真的連外；示範網址當然連不到，這裡只為了截圖給一份「全部通過」的示範結果
+  await p.route('**/api/settings/check', r => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ ready: true, share_ready: true, checks: [
+    { key: 'password', name: '後台密碼', ok: true, text: '已設定' }, { key: 'ack', name: '使用提醒', ok: true, text: '已確認' },
+    { key: 'url', name: '對外網址', ok: true, text: 'https://meet.example.tw（從外面連得到）' }, { key: 'liff', name: '綁定 LINE', ok: true, text: 'LIFF ID 1234567890-AbCdEfGh・Endpoint URL 要填 https://meet.example.tw/share.html' },
+    { key: 'recall', name: '會議機器人', ok: true, optional: true, text: '金鑰可用・us-west-2' }, { key: 'ai', name: 'AI 摘要', ok: true, optional: true, text: '金鑰可用・gpt-4o-mini' }] }) }));
+  await p.evaluate(() => document.getElementById('s5').click()); await p.waitForTimeout(900); await shot('setup-7-check', true);
+  await p.unroute('**/api/settings/check');
   await p.evaluate(() => localStorage.clear());
   await p.goto(`${base}/admin.html`); await p.waitForTimeout(500);
   await p.screenshot({ path: path.join(OUT, 'admin-login.png') });

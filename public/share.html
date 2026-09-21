@@ -109,7 +109,7 @@ async function run() {
     /* 把 LINE 回的錯誤代碼印出來，除錯全靠它（例如 INVALID_ARGUMENT 多半是 Flex 格式不對） */
     var msg = String(e && e.message ? e.message : e);
     /* 常見錯誤翻成白話，原文照樣印在下面的小字裡 */
-    if (/channel not found/i.test(msg)) msg = 'LIFF ID 不正確（LINE 找不到這個 LIFF）。請檢查 .env 的 LIFF_ID。';
+    if (/channel not found/i.test(msg)) msg = 'LIFF ID 不正確（LINE 找不到這個 LIFF）。請到設定精靈的「綁定 LINE」檢查 LIFF ID。';
     else if (/endpoint/i.test(msg)) msg = '這一頁的網址和 LIFF 設定的 Endpoint URL 對不上。';
     status('分享沒有成功：' + msg, 'bad');
     log('error ' + (e && e.code ? e.code + ' ' : '') + (e && e.message ? e.message : e));

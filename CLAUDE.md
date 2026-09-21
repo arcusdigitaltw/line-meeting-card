@@ -16,7 +16,7 @@
 | `lib/summary.js` | OpenAI 相容 API 產生摘要 |
 | `public/share.html` | LIFF 分享頁（LIFF 的 Endpoint URL） |
 | `public/invite.html`、`summary.html` | 公開頁，由 `server.js` 換掉 `__OG_TITLE__` 等佔位字後送出 |
-| `public/setup.html` | 設定精靈：使用提醒 → 密碼 → 對外網址 → 綁定 LINE → Recall → AI。圖解是照後台版面畫的示意圖 |
+| `public/setup.html` | 設定精靈：使用提醒 → 密碼 → 品牌 → 對外網址 → 綁定 LINE → Recall → AI → 最後檢查。圖解是照後台版面畫的示意圖。步驟用名稱切換（`go('line')`），不要用數字 |
 | `public/admin.html` | 後台，純 HTML＋原生 JS |
 
 資料流：後台建會議 → `store` 產生 `invite_token`、`summary_token` → 分享連結 `https://liff.line.me/<LIFF_ID>?invite=<token>` → `share.html` 向 `/api/card/invite/:token` 要 Flex → `liff.shareTargetPicker()`。
@@ -38,7 +38,7 @@ npm run smoke     # 前端頁面語法 ＋ 整體自我檢查 ＋ 設定精靈�
 1. **Flex 裡不能有空字串的 `text`。** 欄位沒填就整列不放，或給預設字。`shareTargetPicker` 遇到空字串會安靜失敗，沒有任何錯誤訊息。新增欄位時，同步在 `test/card.test.js` 加一個「沒填這個欄位」的案例。
 2. **Flex 的圖片只能是 https 的 JPG／PNG。** 一律經過 `flexImage()`。
 3. **Flex 按鈕網址不能超過 1000 字。** 長網址（特別是帶中文的）改成自己的短路由再 302 轉址，參考 `/api/card/invite/:token/google`。
-4. **金鑰只放 `.env`。** 不寫進程式碼、不印在 log、不放進回覆。新增環境變數要同步更新 `.env.example` 和 README。
+4. **金鑰只從設定精靈輸入（存 `data/config.json`）或放 `.env`。** 不寫進程式碼、不印在 log、不放進回覆。新增設定值要同步更新設定精靈、`.env.example` 和 README。
 5. **邀請卡那條路徑（`invite_token`）不能回傳逐字稿或摘要。** 摘要只走 `summary_token`。這是刻意分開的：邀請卡會被一路轉傳。
 6. **公開頁面插入使用者輸入一律用 `textContent`**，伺服器端用 `esc()`。不要用 `innerHTML` 拼字串。
 7. **管理用的 API 一律掛 `admin` 這個 middleware。** 新增路由先想清楚它是公開的還是管理用的。
@@ -46,8 +46,9 @@ npm run smoke     # 前端頁面語法 ＋ 整體自我檢查 ＋ 設定精靈�
 9. **`lib/store.js` 的六個函式介面不要改。** 要換資料庫就換裡面的實作。
 10. **機器人進會議的自我介紹訊息可以改寫，不能拿掉。**
 11. **設定值一律經過 `lib/config.js` 的 `get()` 讀，而且要「用的時候才讀」**，不要在模組載入時存成常數，否則精靈存完要重啟才生效。
-12. **保密提醒不能拿掉。** 精靈第一步、派機器人前的確認、後台表單下方、README 與 docs/04 都有「請不要未經公司允許，擅自使用於公司的客戶會議」這段；`config.acked()` 沒過不能派機器人。
-13. UI 文字用台灣用語；圖示用線條 SVG，不要拿表情符號當圖示。
+12. **凡是使用者需要設定的東西，都要能在設定精靈裡完成，而且精靈走完就要能用。** 新增任何設定值：加進 `lib/config.js` 的 `EDITABLE` 與 `validate()`、在精靈加欄位、能實測的就在存檔前實測（參考 Recall 自動找區域、`ai.test()`）、並且加進 `/api/settings/check` 的最後檢查。不可以出現「這一項請去改 .env」的設計。
+13. **保密提醒不能拿掉。** 精靈第一步、派機器人前的確認、後台表單下方、README 與 docs/04 都有「請不要未經公司允許，擅自使用於公司的客戶會議」這段；`config.acked()` 沒過不能派機器人。
+14. UI 文字用台灣用語；圖示用線條 SVG，不要拿表情符號當圖示。
 
 ## 踩過的雷
 

@@ -2,7 +2,7 @@
 
 三種方式，由簡到繁。不管哪一種，做完都要回頭確認兩件事：
 
-1. `.env` 的 `PUBLIC_URL` 是最終的 https 網址，結尾沒有斜線。
+1. 設定精靈裡的「對外網址」是最終的 https 網址（打開 `/setup.html`，用後台密碼登入就能改）。
 2. LINE Developers 裡 LIFF 的 **Endpoint URL** 是 `https://同一個網址/share.html`。
 
 這兩個網址只要有一個對不上，分享就會壞。
@@ -36,8 +36,8 @@ npx cloudflared tunnel --url http://localhost:3000
 3. 設定：
    - Build command：`npm install`
    - Start command：`npm start`
-   - 環境變數：把 `.env` 裡的每一項貼進平台的設定頁（**不要**把 `.env` 檔推上 GitHub）。
-4. 部署完拿到平台給的 https 網址，填回環境變數的 `PUBLIC_URL`，再重新部署一次。
+   - 環境變數：不用設。部署完打開 `https://平台給的網址/setup.html`，照設定精靈走一遍就好（設定碼在平台的 Log 裡）。
+4. 精靈的「對外網址」填平台給的 https 網址。想把設定放在平台的環境變數也可以，名稱照 `.env.example`，環境變數的優先權比精靈高。
 
 ### 一定要注意：資料會不會不見
 
@@ -64,7 +64,6 @@ sudo npm install -g pm2
 git clone https://github.com/arcusdigitaltw/line-meeting-card.git /opt/line-meeting-card
 cd /opt/line-meeting-card
 npm install --omit=dev
-cp .env.example .env && nano .env        # PUBLIC_URL 填 https://meet.你的網域
 
 # 3. 啟動並設成開機自動跑
 pm2 start server.js --name line-meeting-card
@@ -93,7 +92,7 @@ cd /opt/line-meeting-card && git pull && npm install --omit=dev && pm2 restart l
 
 ### 備份
 
-要備份的只有兩個檔案：`.env` 和 `data/meetings.json`。
+要備份的只有 `data/` 這個資料夾：`config.json`（精靈存的設定）和 `meetings.json`（會議資料）。有用 `.env` 的話也一起備份。
 
 ## 部署後的檢查清單
 

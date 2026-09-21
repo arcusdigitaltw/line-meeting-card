@@ -126,8 +126,50 @@ app.post('/api/settings/test-recall', admin, async (req, res) => {
   const b = req.body || {};
   const apiKey = String(b.api_key || '').trim() || config.get('RECALL_API_KEY');
   if (!apiKey) return res.status(400).json({ error: '請先貼上 API Key' });
-  try { res.json(await recall.testKey(apiKey, config.REGIONS.includes(b.region) ? b.region : config.get('RECALL_REGION'))); }
-  catch (e) { res.json({ ok: false, reason: '連不到 Recall：' + e.message }); }
+  try {
+    // 使用者通常不知道自己的帳號在哪一區：四區都問一次，認得金鑰的那一區就是答案
+    const region = await recall.detectRegion(apiKey, config.REGIONS);
+    if (region) return res.json({ ok: true, region });
+    res.json({ ok: false, reason: '四個區域都不認得這把金鑰。請確認整串都有複製到（前後沒有多空白），而且金鑰沒有被刪除。' });
+  } catch (e) { res.json({ ok: false, reason: '連不到 Recall：' + e.message }); }
+});
+app.post('/api/settings/test-llm', admin, async (req, res) => {
+  const b = req.body || {};
+  res.json(await ai.test({ apiKey: String(b.api_key || '').trim(), baseUrl: String(b.base_url || '').trim(), model: String(b.model || '').trim() }));
+});
+
+/**
+ * 精靈最後一步的總檢查：每一項都實際試一次，回傳 { key, ok, optional, text, fix }。
+ * 必要項目全過＝可以開始用；選用項目沒設定不算失敗。
+ */
+app.get('/api/settings/check', admin, async (req, res) => {
+  const out = []; const add = (key, name, ok, text, o = {}) => out.push({ key, name, ok, text, optional: !!o.optional, fix: o.fix || null });
+  add('password', '後台密碼', true, '已設定');
+  add('ack', '使用提醒', config.acked(), config.acked() ? '已確認' : '還沒勾選。沒勾選不能派機器人。', { fix: 'notice' });
+  const pub = config.get('PUBLIC_URL'); const https = /^https:\/\//.test(pub);
+  if (!pub) add('url', '對外網址', false, '還沒填。沒有 https 網址就不能分享到 LINE。', { fix: 'url' });
+  else if (!https) add('url', '對外網址', false, `${pub} 不是 https，LINE 不會接受。`, { fix: 'url' });
+  else {
+    // 真的從外面繞一圈回來，確認通道或網域有接到這支程式
+    const reach = await fetch(`${pub}/api/config`, { signal: AbortSignal.timeout(8000) }).then(r => (r.ok ? r.json() : null)).then(j => !!(j && 'liff_ready' in j)).catch(() => false);
+    add('url', '對外網址', reach, reach ? `${pub}（從外面連得到）` : `${pub} 從外面連不到這支程式。通道的視窗是不是關掉了？網址是不是換了？`, { fix: 'url' });
+  }
+  add('liff', '綁定 LINE', !!C.liffId, C.liffId ? `LIFF ID ${C.liffId}・Endpoint URL 要填 ${C.publicUrl}/share.html` : '還沒填 LIFF ID。', { fix: 'line' });
+  if (!recall.enabled()) add('recall', '會議機器人', true, '沒有設定（只用資訊卡，可以之後再補）', { optional: true, fix: 'recall' });
+  else { const t = await recall.testKey(config.get('RECALL_API_KEY'), config.get('RECALL_REGION')).catch(e => ({ ok: false, reason: e.message })); add('recall', '會議機器人', t.ok, t.ok ? `金鑰可用・${config.get('RECALL_REGION')}` : t.reason, { optional: true, fix: 'recall' }); }
+  if (!ai.enabled()) add('ai', 'AI 摘要', true, '沒有設定（會後只保留逐字稿，可以之後再補）', { optional: true, fix: 'ai' });
+  else { const t = await ai.test(); add('ai', 'AI 摘要', t.ok, t.ok ? `金鑰可用・${config.get('LLM_MODEL')}` : t.reason, { optional: true, fix: 'ai' }); }
+  res.json({ checks: out, ready: out.every(x => x.ok), share_ready: out.filter(x => !x.optional).every(x => x.ok) });
+});
+
+// 一鍵建立一場測試會議，讓使用者馬上有一條分享連結可以貼到 LINE 試
+app.post('/api/settings/sample-meeting', admin, (req, res) => {
+  let m = store.list().find(x => x.is_sample);
+  if (!m) {
+    const start = new Date(Date.now() + 864e5); start.setUTCMinutes(0, 0, 0);
+    m = store.create({ is_sample: true, title: '測試會議（可以刪除）', description: '這是設定精靈幫你建立的測試會議，用來確認分享到 LINE 沒問題。', start: start.toISOString(), end: new Date(start.getTime() + 3600e3).toISOString(), join_url: 'https://meet.google.com/', organizer: config.get('ORGANIZER_NAME') || C.brand });
+  }
+  res.json({ meeting: view(m) });
 });
 
 app.get('/api/card/:kind/:token', (req, res) => {

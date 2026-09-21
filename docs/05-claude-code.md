@@ -88,7 +88,7 @@ list、get、getByToken、create、update、remove 這六個函式的用法不�
 
 - **它說 LINE 後台某個按鈕在哪裡。** 後台會改版，它的記憶可能是舊的。以你眼前的畫面和 [LINE 官方文件](https://developers.line.biz/en/docs/liff/) 為準。
 - **它說 Recall.ai 的某個參數可以這樣寫。** 請它附上官方文件的連結，或先用一場測試會議試過。
-- **它想把金鑰寫進程式碼。** 金鑰只能放 `.env`。看到它把 `RECALL_API_KEY` 的值貼進任何 `.js` 檔，立刻叫它改回去。
+- **它想把金鑰寫進程式碼。** 金鑰只能從設定精靈輸入（存在 `data/config.json`）或放 `.env`。看到它把 `RECALL_API_KEY` 的值貼進任何 `.js` 檔，立刻叫它改回去。
 - **它跳過測試。** 沒貼出 `npm test` 的結果，就當作沒測。
 
 ## 把你踩到的雷記下來
