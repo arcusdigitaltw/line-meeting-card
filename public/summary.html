@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__OG_TITLE__</title>
+<meta property="og:title" content="__OG_TITLE__">
+<meta property="og:description" content="__OG_DESC__">
+<meta property="og:image" content="__OG_IMAGE__">
+<meta name="robots" content="noindex">
+<style>
+  :root{--accent:#0EA5E9;--ink:#0b0b0d;--soft:#54524d;--mute:#9a978f;--line:#eceae4}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#f4f3ef;color:var(--ink);font-family:-apple-system,"Noto Sans TC","PingFang TC",sans-serif;padding:20px 16px 56px;line-height:1.8}
+  .card{max-width:720px;margin:0 auto;background:#fff;border-radius:24px;padding:30px 26px;box-shadow:0 30px 70px -40px rgba(11,11,13,.35)}
+  .label{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.06em}
+  h1{margin-top:6px;font-size:28px;line-height:1.3}.when{color:var(--soft);font-size:15px;margin-top:6px}
+  .points{margin:22px 0;padding:18px 20px;border-radius:16px;background:#f6f9fb;border-left:4px solid var(--accent);list-style:none}
+  .points li{padding:4px 0 4px 18px;position:relative}.points li::before{content:"";position:absolute;left:0;top:16px;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  #md h2{font-size:20px;margin:26px 0 8px;padding-top:18px;border-top:1px solid var(--line)}
+  #md h3{font-size:17px;margin:18px 0 6px}#md p{margin:8px 0}#md ul{margin:6px 0 6px 22px}
+  .todo{margin-top:26px;border-top:1px solid var(--line);padding-top:18px}
+  .todo h2{font-size:20px;margin-bottom:10px}
+  .todo div{display:grid;grid-template-columns:1fr auto;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;font-size:15px}
+  .todo small{color:var(--mute);white-space:nowrap}
+  a.btn{display:block;max-width:720px;margin:16px auto 0;text-align:center;padding:15px;border-radius:14px;font-size:16px;font-weight:700;text-decoration:none;background:#06c755;color:#fff}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="label">會議摘要</div>
+  <h1 id="title">載入中…</h1>
+  <p class="when" id="when"></p>
+  <ul class="points" id="points" hidden></ul>
+  <div id="md"></div>
+  <div class="todo" id="todo" hidden><h2>待辦事項</h2></div>
+</div>
+<a class="btn" id="share" hidden>分享摘要到 LINE</a>
+<script>
+var TOKEN = '__TOKEN__';
+function $(id) { return document.getElementById(id); }
+function el(tag, text) { var e = document.createElement(tag); if (text != null) e.textContent = text; return e; }
+/* 只支援摘要會用到的 Markdown（標題、條列、粗體），全部用 textContent 建，不會有 XSS */
+function inline(parent, text) {
+  text.split(/(\*\*[^*]+\*\*)/).forEach(function (part) {
+    if (/^\*\*[^*]+\*\*$/.test(part)) parent.appendChild(el('strong', part.slice(2, -2))); else if (part) parent.appendChild(document.createTextNode(part));
+  });
+}
+function render(md, root) {
+  var ul = null;
+  String(md || '').split(/\r?\n/).forEach(function (line) {
+    var m;
+    if ((m = line.match(/^\s*[-*・]\s+(.*)$/))) { if (!ul) { ul = el('ul'); root.appendChild(ul); } var li = el('li'); inline(li, m[1]); ul.appendChild(li); return; }
+    ul = null;
+    if ((m = line.match(/^(#{1,3})\s+(.*)$/))) { root.appendChild(el(m[1].length <= 2 ? 'h2' : 'h3', m[2])); return; }
+    if (line.trim()) { var p = el('p'); inline(p, line); root.appendChild(p); }
+  });
+}
+fetch('/api/card/summary/' + encodeURIComponent(TOKEN)).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j; }); }).then(function (c) {
+  document.documentElement.style.setProperty('--accent', c.accent || '#0EA5E9');
+  $('title').textContent = c.title; $('when').textContent = c.when_label || '';
+  (c.summary_points || []).forEach(function (p) { $('points').appendChild(el('li', p)); $('points').hidden = false; });
+  render(c.summary, $('md'));
+  (c.action_items || []).forEach(function (a) {
+    var row = el('div'); row.appendChild(el('span', a.text)); row.appendChild(el('small', [a.assignee, a.due_date].filter(Boolean).join('・')));
+    $('todo').appendChild(row); $('todo').hidden = false;
+  });
+  if (c.share_url) { $('share').href = c.share_url; $('share').hidden = false; }
+}).catch(function (e) { $('title').textContent = e.message || '找不到這份摘要'; });
+</script>
+</body>
+</html>

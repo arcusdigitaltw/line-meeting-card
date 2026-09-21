@@ -1,0 +1,19 @@
+{
+  "name": "line-meeting-card",
+  "version": "1.0.0",
+  "description": "會議資訊卡 × LINE LIFF 分享 × 會議機器人：把一場會議變成一張可以在 LINE 裡轉傳的卡片",
+  "license": "MIT",
+  "main": "server.js",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test",
+    "flex": "node scripts/print-flex.js",
+    "smoke": "node scripts/smoke.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2"
+  }
+}

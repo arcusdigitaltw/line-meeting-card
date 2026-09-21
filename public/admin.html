@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>會議資訊卡・後台</title>
+<meta name="robots" content="noindex,nofollow">
+<style>
+  :root{--accent:#0EA5E9;--ink:#0b0b0d;--soft:#54524d;--mute:#9a978f;--line:#e7e5df}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#f4f3ef;color:var(--ink);font-family:-apple-system,"Noto Sans TC","PingFang TC",sans-serif;line-height:1.6}
+  header{display:flex;align-items:center;gap:14px;padding:18px clamp(16px,4vw,40px);background:#fff;border-bottom:1px solid var(--line)}
+  header b{font-size:19px;flex:1}
+  .chips span{display:inline-block;font-size:12px;padding:4px 10px;border-radius:100px;margin-left:6px;background:#f1f0ec;color:var(--mute)}
+  .chips span.on{background:#dcfce7;color:#15803d}
+  main{max-width:1080px;margin:0 auto;padding:24px clamp(16px,4vw,40px) 60px;display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start}
+  @media(max-width:900px){main{grid-template-columns:1fr}}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px}
+  h2{font-size:17px;margin-bottom:14px}
+  label{display:block;font-size:13px;color:var(--soft);margin:12px 0 5px}
+  input,textarea,select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:15px;background:#fff}
+  input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  textarea{min-height:74px;resize:vertical}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.two>div{min-width:0}.two.stack{grid-template-columns:1fr}
+  .check{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:14px;color:var(--ink)}
+  .check input{width:18px;height:18px;margin-top:3px;flex:none}
+  button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:600;background:#f1f0ec;color:var(--ink)}
+  button.primary{background:var(--accent);color:#fff}button.line{background:#06c755;color:#fff}button.danger{background:#fee2e2;color:#b91c1c}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .full{width:100%;margin-top:18px;padding:13px;font-size:15px}
+  .m{border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:12px;background:#fff}
+  .m h3{font-size:17px}.m .when{font-size:14px;color:var(--soft)}
+  .m .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .st{display:inline-block;font-size:12px;font-weight:700;border-radius:100px;padding:3px 10px;margin-left:8px;vertical-align:middle;background:#f1f0ec;color:var(--mute)}
+  .st.joining,.st.processing{background:#fef3c7;color:#b45309}.st.in_call{background:#dbeafe;color:#1d4ed8}.st.done{background:#dcfce7;color:#15803d}.st.failed{background:#fee2e2;color:#b91c1c}
+  .err{margin-top:8px;font-size:13px;color:#b91c1c}
+  .empty{color:var(--mute);text-align:center;padding:40px 0}
+  .gate{max-width:380px;margin:12vh auto;text-align:center}
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#0b0b0d;color:#fff;padding:11px 20px;border-radius:100px;font-size:14px;opacity:0;transition:.3s;pointer-events:none}.toast.on{opacity:1}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><b id="brand">會議資訊卡・後台</b><div class="chips"><span id="cLiff">LIFF</span><span id="cBot">會議機器人</span><span id="cAi">AI 摘要</span></div><button id="logout" hidden>登出</button></header>
+
+<div class="gate panel" id="gate">
+  <h2>輸入管理密碼</h2>
+  <p style="font-size:14px;color:var(--soft)">就是你在 .env 裡設定的 ADMIN_TOKEN。只會存在這個瀏覽器。</p>
+  <input id="tok" type="password" placeholder="ADMIN_TOKEN" style="margin-top:14px" autocomplete="current-password">
+  <button class="primary full" id="login">進入後台</button>
+</div>
+
+<main id="app" hidden>
+  <form class="panel" id="form">
+    <h2 id="formTitle">新增會議</h2>
+    <label>會議名稱 *</label><input name="title" required maxlength="80">
+    <div class="two stack"><div><label>開始時間</label><input name="start" type="datetime-local"></div><div><label>結束時間</label><input name="end" type="datetime-local"></div></div>
+    <label>會議連結（Zoom／Google Meet／Teams）</label><input name="join_url" placeholder="https://…">
+    <label>會議密碼</label><input name="passcode" maxlength="40">
+    <div class="two"><div><label>地點名稱</label><input name="location" placeholder="實體會議才需要"></div><div><label>地址</label><input name="address"></div></div>
+    <label>主辦單位／主辦人</label><input name="organizer" maxlength="60">
+    <label>簡短說明</label><textarea name="description" maxlength="2000"></textarea>
+    <label>封面圖網址（https 的 JPG／PNG，可不填）</label><input name="cover" placeholder="https://…jpg">
+    <label class="check"><input type="checkbox" name="auto_bot"><span>會議開始前 2 分鐘自動派機器人進去記錄<br><small style="color:var(--mute)">需要先設定 RECALL_API_KEY，而且要有會議連結</small></span></label>
+    <button class="primary full" type="submit" id="save">建立會議</button>
+    <button class="full" type="button" id="cancel" hidden>取消編輯</button>
+  </form>
+  <section><h2>會議列表</h2><div id="list"></div></section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+var KEY = 'lmc_admin_token', TOKEN = '', EDIT = null, DATA = [];
+function $(id) { return document.getElementById(id); }
+function toast(t) { var e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(function () { e.classList.remove('on'); }, 2400); }
+function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function api(method, url, body) {
+  return fetch(url, { method: method, headers: { 'Content-Type': 'application/json', 'x-admin-token': TOKEN }, body: body ? JSON.stringify(body) : undefined })
+    .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || ('錯誤 ' + r.status)); return j; }); });
+}
+function copy(text, msg) { navigator.clipboard.writeText(text).then(function () { toast(msg || '已複製'); }, function () { prompt('請手動複製', text); }); }
+/* UTC ISO → datetime-local 要的「瀏覽器當地時間」字串 */
+function toLocal(iso) { if (!iso) return ''; var d = new Date(iso); d = new Date(d.getTime() - d.getTimezoneOffset() * 60000); return d.toISOString().slice(0, 16); }
+var ST = { none: '未派機器人', joining: '機器人加入中', in_call: '記錄中', processing: '整理逐字稿', done: '已完成', failed: '失敗' };
+
+function render() {
+  var box = $('list'); box.textContent = '';
+  if (!DATA.length) { box.appendChild(el('p', 'empty', '還沒有會議，先在左邊建立一場。')); return; }
+  DATA.forEach(function (m) {
+    var card = el('div', 'm'), h = el('h3', null, m.title);
+    h.appendChild(el('span', 'st ' + m.bot.status, ST[m.bot.status] || m.bot.status)); card.appendChild(h);
+    card.appendChild(el('p', 'when', [m.when_label || '時間待定', m.location || (m.join_url ? '線上會議' : '')].filter(Boolean).join('・')));
+    if (m.bot.error) card.appendChild(el('p', 'err', m.bot.error));
+    var acts = el('div', 'acts');
+    function add(label, cls, fn, off) { var b = el('button', cls, label); b.disabled = !!off; b.onclick = fn; acts.appendChild(b); }
+    add('複製 LINE 分享連結', 'line', function () { copy(m.share_invite_url, '已複製，貼到 LINE 點開就能選人傳送'); }, !m.share_invite_url);
+    add('複製邀請頁網址', '', function () { copy(m.page_url); });
+    if (m.summary) { add('複製摘要分享連結', 'line', function () { copy(m.share_summary_url || m.summary_url, '已複製摘要連結'); }); add('看摘要', '', function () { open(m.summary_url, '_blank'); }); }
+    if (['joining', 'in_call'].indexOf(m.bot.status) >= 0) add('請機器人離開', '', function () { act(m, 'bot/leave', '已請機器人離開'); });
+    else add(m.bot.status === 'none' ? '派機器人' : '重新派機器人', '', function () { act(m, 'bot', '機器人出發了'); }, !m.join_url);
+    if (m.bot.id) add('同步狀態', '', function () { act(m, 'sync', '已同步'); });
+    if (m.transcript_count) add('重新產生摘要', '', function () { act(m, 'summarize', '摘要完成'); });
+    add('編輯', '', function () { edit(m); });
+    add('刪除', 'danger', function () { if (confirm('確定刪除「' + m.title + '」？分享出去的連結也會失效。')) api('DELETE', '/api/meetings/' + m.id).then(load); });
+    card.appendChild(acts); box.appendChild(card);
+  });
+}
+function act(m, path, ok) { api('POST', '/api/meetings/' + m.id + '/' + path).then(function () { toast(ok); load(); }).catch(function (e) { toast(e.message); load(); }); }
+function edit(m) {
+  EDIT = m.id; var f = $('form');
+  ['title', 'join_url', 'passcode', 'location', 'address', 'organizer', 'description', 'cover'].forEach(function (k) { f[k].value = m[k] || ''; });
+  f.start.value = toLocal(m.start); f.end.value = toLocal(m.end); f.auto_bot.checked = !!m.auto_bot;
+  $('formTitle').textContent = '編輯會議'; $('save').textContent = '儲存'; $('cancel').hidden = false; scrollTo({ top: 0, behavior: 'smooth' });
+}
+function reset() { EDIT = null; $('form').reset(); $('formTitle').textContent = '新增會議'; $('save').textContent = '建立會議'; $('cancel').hidden = true; }
+$('cancel').onclick = reset;
+$('form').onsubmit = function (ev) {
+  ev.preventDefault(); var f = ev.target, body = { auto_bot: f.auto_bot.checked };
+  ['title', 'join_url', 'passcode', 'location', 'address', 'organizer', 'description', 'cover'].forEach(function (k) { body[k] = f[k].value; });
+  /* datetime-local 是瀏覽器當地時間，轉成帶時區的 ISO 再送，伺服器就不用猜時區 */
+  body.start = f.start.value ? new Date(f.start.value).toISOString() : ''; body.end = f.end.value ? new Date(f.end.value).toISOString() : '';
+  (EDIT ? api('PATCH', '/api/meetings/' + EDIT, body) : api('POST', '/api/meetings', body)).then(function () { toast(EDIT ? '已儲存' : '已建立'); reset(); load(); }).catch(function (e) { toast(e.message); });
+};
+function load() { return api('GET', '/api/meetings').then(function (j) { DATA = j.meetings; render(); }); }
+function enter() {
+  load().then(function () { $('gate').hidden = true; $('app').hidden = false; $('logout').hidden = false; try { localStorage.setItem(KEY, TOKEN); } catch (e) {} })
+    .catch(function (e) { toast(e.message); try { localStorage.removeItem(KEY); } catch (x) {} });
+}
+$('login').onclick = function () { TOKEN = $('tok').value.trim(); enter(); };
+$('tok').onkeydown = function (e) { if (e.key === 'Enter') $('login').click(); };
+$('logout').onclick = function () { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); };
+fetch('/api/config').then(function (r) { return r.json(); }).then(function (c) {
+  document.documentElement.style.setProperty('--accent', c.accent); $('brand').textContent = c.brand + '・後台';
+  if (c.liff_ready) $('cLiff').className = 'on'; if (c.bot_ready) $('cBot').className = 'on'; if (c.summary_ready) $('cAi').className = 'on';
+});
+try { TOKEN = localStorage.getItem(KEY) || ''; } catch (e) {}
+if (TOKEN) enter();
+setInterval(function () { if (!$('app').hidden && !EDIT) load().catch(function () {}); }, 30000);
+</script>
+</body>
+</html>

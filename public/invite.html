@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__OG_TITLE__</title>
+<!-- 這幾個 __XX__ 由 server.js 在送出前換成這一場會議的內容，貼到 LINE／FB 才會顯示正確的預覽 -->
+<meta property="og:title" content="__OG_TITLE__">
+<meta property="og:description" content="__OG_DESC__">
+<meta property="og:image" content="__OG_IMAGE__">
+<meta property="og:type" content="website">
+<meta name="robots" content="noindex">
+<style>
+  :root{--accent:#0EA5E9;--ink:#0b0b0d;--soft:#54524d;--mute:#9a978f;--line:#eceae4}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#f4f3ef;color:var(--ink);font-family:-apple-system,"Noto Sans TC","PingFang TC",sans-serif;padding:20px 16px 48px}
+  .card{max-width:520px;margin:0 auto;background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 30px 70px -40px rgba(11,11,13,.35)}
+  .cover{display:block;width:100%;aspect-ratio:20/11;object-fit:cover}
+  .body{padding:26px 24px 8px}
+  .label{font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.06em}
+  h1{margin-top:8px;font-size:28px;line-height:1.3}
+  .desc{margin-top:12px;font-size:15px;line-height:1.8;color:var(--soft);white-space:pre-wrap}
+  dl{margin-top:20px;border-top:1px solid var(--line);padding-top:18px;display:grid;grid-template-columns:64px 1fr;gap:12px 14px;font-size:15px;line-height:1.6}
+  dt{color:var(--mute)}dd{word-break:break-word;white-space:pre-wrap}
+  .btns{padding:18px 20px 24px;display:grid;gap:10px}
+  a.btn,button.btn{display:block;text-align:center;padding:15px;border-radius:14px;font-size:16px;font-weight:700;text-decoration:none;border:0;cursor:pointer;font-family:inherit}
+  .primary{background:var(--accent);color:#fff}.line{background:#06c755;color:#fff}.second{background:#f1f0ec;color:var(--ink)}
+  .foot{max-width:520px;margin:18px auto 0;text-align:center;font-size:12px;color:var(--mute)}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="card">
+  <img class="cover" id="cover" alt="" hidden>
+  <div class="body">
+    <div class="label">會議邀請</div>
+    <h1 id="title">載入中…</h1>
+    <p class="desc" id="desc" hidden></p>
+    <dl id="rows"></dl>
+  </div>
+  <div class="btns">
+    <a class="btn primary" id="join" hidden>前往會議</a>
+    <a class="btn line" id="share" hidden>分享到 LINE</a>
+    <a class="btn second" id="map" target="_blank" rel="noopener" hidden>Google Map 導航</a>
+    <a class="btn second" id="gcal" target="_blank" rel="noopener" hidden>加入 Google 行事曆</a>
+    <a class="btn second" id="ics" hidden>加入 Apple 行事曆</a>
+  </div>
+</div>
+<p class="foot" id="foot"></p>
+<script>
+var TOKEN = '__TOKEN__';
+function $(id) { return document.getElementById(id); }
+function show(id, href) { if (!href) return; var e = $(id); e.href = href; e.hidden = false; }
+fetch('/api/card/invite/' + encodeURIComponent(TOKEN)).then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j; }); }).then(function (c) {
+  document.documentElement.style.setProperty('--accent', c.accent || '#0EA5E9');
+  $('title').textContent = c.title; $('foot').textContent = c.brand || '';
+  if (c.description) { $('desc').textContent = c.description; $('desc').hidden = false; }
+  if (c.cover) { $('cover').src = c.cover; $('cover').hidden = false; }
+  var place = [c.location, c.address].filter(Boolean).join('\n') || (c.join_url ? '線上會議' : '');
+  [['時間', c.when_label || '時間待定'], ['地點', place], ['密碼', c.passcode], ['主辦', c.organizer]].forEach(function (r) {
+    if (!r[1]) return; var dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = r[0]; dd.textContent = r[1]; $('rows').append(dt, dd);
+  });
+  show('join', c.join_url); show('share', c.share_url);
+  var q = c.address || c.location; if (q) show('map', 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q));
+  if (c.when_label) { show('gcal', c.google_url); show('ics', c.ics_url); }
+}).catch(function (e) { $('title').textContent = e.message || '找不到這場會議'; });
+</script>
+</body>
+</html>
