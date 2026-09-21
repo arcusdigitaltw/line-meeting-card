@@ -51,6 +51,18 @@
   .shot .btn.dark{background:#111827}.pill{display:inline-block;border-radius:100px;padding:2px 10px;font-size:12px;font-weight:700;background:#fee2e2;color:#b91c1c}.pill.g{background:#dcfce7;color:#15803d}
   .shot .tog{display:inline-block;width:34px;height:18px;border-radius:18px;background:#06c755;position:relative;vertical-align:middle}.shot .tog::after{content:"";position:absolute;right:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#fff}
   .cap{font-size:12.5px;color:var(--mute);margin-bottom:6px}
+  .shot .btn.blue{background:#2563eb}
+  .shot.term{background:#0c0c0c;border-color:#0c0c0c;max-width:640px}.shot.term .bar{background:#1f1f1f;border-color:#2a2a2a;color:#9ca3af}.shot.term .bar span{background:#2a2a2a;color:#d1d5db}
+  .shot.term .body{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;line-height:1.75;color:#e5e7eb;overflow-x:auto}
+  .shot.term .body p{white-space:pre;margin:0}
+  .shot.term .dim{color:#8b949e}.shot.term mark{background:#fde047;color:#111;border-radius:3px;padding:1px 4px;font-weight:700}
+  details.way{border:1px solid var(--line);border-radius:16px;padding:4px 18px;margin:12px 0;background:#fcfcfa}
+  details.way[open]{padding-bottom:12px;background:#fff}
+  details.way summary{cursor:pointer;padding:12px 0;list-style:none;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+  details.way summary::-webkit-details-marker{display:none}
+  details.way summary::before{content:"";width:8px;height:8px;border-right:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:rotate(-45deg);transition:transform .2s;margin-right:4px}
+  details.way[open] summary::before{transform:rotate(45deg)}
+  details.way summary b{font-size:16px}details.way summary span{font-size:13px;color:var(--mute)}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -102,8 +114,49 @@
     <p class="cap">我先幫你填了現在瀏覽器上的網址。</p>
     <div id="localTip" hidden class="notice" style="border-color:#93c5fd;background:#eff6ff"><b style="color:#1e40af">你現在是用本機網址打開的</b><ul style="color:#1e3a8a">
       <li>只想先看看畫面、設好密碼：直接按下一步，之後再回來改。</li>
-      <li>要真的分享到 LINE，需要一個 https 網址。有自己的網域，照 <span class="k">docs/06-cloudflare-domain.md</span> 用 Cloudflare 接上（免費、網址固定）。</li>
-      <li>只是想快速試一下：另開一個視窗執行 <span class="k">npx cloudflared tunnel --url http://localhost:3000</span>，把它給的 https 網址貼到上面（這種網址每次重開都會變）。</li></ul></div>
+      <li>要真的分享到 LINE，需要一個 https 網址，下面兩種做法選一種。</li></ul></div>
+
+    <h3>還沒有 https 網址？兩種做法</h3>
+    <p class="cap">下面的圖是照實際畫面畫的示意圖，實際畫面可能因改版略有不同。</p>
+    <details class="way" open>
+      <summary><b>做法 A　快速試一下</b><span>1 分鐘・免費・不用帳號・網址每次重開都會變</span></summary>
+      <ol class="how">
+        <li>不要關掉正在跑 <span class="k">npm start</span> 的視窗，<b>另外再開一個</b>命令提示字元（或終端機）視窗，貼上這一行：
+          <div class="copy"><span id="qt">npx cloudflared tunnel --url http://localhost:3000</span><button type="button" data-copy="qt">複製</button></div></li>
+        <li>等幾秒，畫面上會出現一個框，裡面那個 <span class="k">https://….trycloudflare.com</span> 就是你的對外網址：
+          <div class="shot term"><div class="bar"><i></i><i></i><i></i><span>命令提示字元</span></div><div class="body">
+            <p>C:\line-meeting-card&gt; npx cloudflared tunnel --url http://localhost:3000</p>
+            <p class="dim">INF Requesting new quick Tunnel on trycloudflare.com...</p>
+            <p class="dim">INF +--------------------------------------------------------+</p>
+            <p class="dim">INF |  Your quick Tunnel has been created! Visit it at:      |</p>
+            <p>INF |  <mark>https://random-words-here.trycloudflare.com</mark>        |</p>
+            <p class="dim">INF +--------------------------------------------------------+</p></div></div></li>
+        <li>把那個網址複製起來，貼到上面的「對外網址」，再<b>改用那個網址重新打開這一頁</b>（網址後面加 <span class="k">/setup.html</span>）。這個視窗也要一直開著，關掉網址就失效。</li>
+      </ol>
+    </details>
+    <details class="way">
+      <summary><b>做法 B　用自己的網域</b><span>約 15 分鐘・免費・網址固定・需要網域已交給 Cloudflare 管理</span></summary>
+      <ol class="how">
+        <li>登入 <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener">Cloudflare</a>，左邊選單進 <b>Zero Trust</b>（第一次會請你選方案，選 Free），再進 <b>Networks → Tunnels</b>，按 <b>Create a tunnel</b>。
+          <div class="shot"><div class="bar"><i></i><i></i><i></i><span>one.dash.cloudflare.com　Networks › Tunnels</span></div><div class="body"><div style="display:flex;justify-content:space-between;align-items:center"><b>Tunnels</b><span class="btn blue hl">Create a tunnel</span></div></div></div></li>
+        <li>類型選 <b>Cloudflared</b>，名稱隨意（例如 <span class="k">meeting-card</span>），按 <b>Save tunnel</b>。
+          <div class="shot"><div class="body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center"><div class="hl" style="border:1px solid #d1d5db;border-radius:8px;padding:14px 6px"><b>Cloudflared</b></div><div style="border:1px solid #d1d5db;border-radius:8px;padding:14px 6px;color:#9ca3af">WARP Connector</div></div><div class="f" style="margin-top:10px"><small>Tunnel name</small><span>meeting-card</span></div></div></div></li>
+        <li>頁面會給你一段安裝指令。選你的作業系統，下載安裝 cloudflared，再把那一行指令<b>整行</b>貼到命令提示字元執行（Windows 要用「以系統管理員身分執行」打開）。
+          <div class="shot"><div class="body"><div class="tabs"><b class="on" style="color:#2563eb;border-color:#2563eb">Windows</b><b>Mac</b><b>Debian</b><b>Docker</b></div><div class="f"><small>安裝並執行</small><span class="hl" style="font-family:ui-monospace,Consolas,monospace">cloudflared.exe service install eyJhIjoi……</span></div><div class="f"><small>Connectors</small><span style="border:0"><span class="pill g">Connected</span></span></div></div></div>
+          <p class="cap">那一長串英數字是這條 Tunnel 的金鑰，不要貼給別人、不要放上 GitHub。下方出現 Connected 才算裝好。</p></li>
+        <li>按 Next，在 <b>Public Hostnames</b> 新增一筆，照下面填，按 <b>Save</b>：
+          <div class="shot"><div class="body">
+            <div class="f"><small>Subdomain</small><span>meet</span></div>
+            <div class="f"><small>Domain</small><span>你的網域（下拉選）</span></div>
+            <div class="f"><small>Path</small><span style="color:#9ca3af">留空</span></div>
+            <div class="f"><small>Type</small><span class="hl">HTTP</span></div>
+            <div class="f"><small>URL</small><span class="hl">localhost:3000</span></div>
+            <div style="margin-top:10px"><span class="btn blue">Save</span></div></div></div>
+          <p class="cap">Type 要選 HTTP，不是 HTTPS。對外的 https 由 Cloudflare 處理，到你電腦這一段走本機的 http。這裡最多人選錯。</p></li>
+        <li>用瀏覽器打開 <span class="k">https://meet.你的網域/setup.html</span>，看得到這個精靈就成功了。把 <span class="k">https://meet.你的網域</span> 填到上面的「對外網址」。</li>
+      </ol>
+      <p class="cap">更完整的說明與常見錯誤，看專案裡的 <span class="k">docs/06-cloudflare-domain.md</span>。</p>
+    </details>
     <p class="msg" id="m2"></p>
     <div class="nav"><button data-back>上一步</button><button class="primary" id="n2">下一步</button></div>
   </section>

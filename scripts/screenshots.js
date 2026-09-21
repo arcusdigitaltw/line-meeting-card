@@ -37,7 +37,13 @@ const srv = app.listen(0, async () => {
   await p.goto(`${base}/setup.html`); await p.waitForTimeout(600);
   await p.check('#ack'); await shot('setup-0-notice', true);
   await p.evaluate(() => document.getElementById('n0').click()); await p.fill('#code', SETUP_CODE); await p.fill('#pw1', PW); await p.fill('#pw2', PW); await shot('setup-1-password', true);
-  await p.evaluate(() => document.getElementById('n1').click()); await p.waitForTimeout(600); await p.fill('#pub', 'https://meet.example.tw'); await shot('setup-2-url', true);
+  await p.evaluate(() => document.getElementById('n1').click()); await p.waitForTimeout(600); await p.fill('#pub', 'https://meet.example.tw');
+  // 兩種取得 https 網址的圖解各截一張（教學文件會用到），再截整頁
+  await p.evaluate(() => document.querySelectorAll('details.way').forEach(d => { d.open = true; }));
+  await p.waitForTimeout(300);
+  await p.locator('details.way').nth(0).screenshot({ path: path.join(OUT, 'url-a-quick-tunnel.png') });
+  await p.locator('details.way').nth(1).screenshot({ path: path.join(OUT, 'url-b-cloudflare-domain.png') });
+  await shot('setup-2-url', true);
   await p.evaluate(() => document.getElementById('n2').click()); await p.waitForTimeout(600); await p.fill('#liff', '1234567890-AbCdEfGh'); await shot('setup-3-line', true);
   await p.evaluate(() => document.getElementById('n3').click()); await p.waitForTimeout(600); await p.fill('#rkey', 'demo-recall-key-a1b2'); await shot('setup-4-recall', true);
   await p.evaluate(() => document.getElementById('n4').click()); await p.waitForTimeout(900); await p.fill('#lkey', 'demo-llm-key-c3d4'); await shot('setup-5-ai', true);

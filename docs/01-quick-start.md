@@ -40,7 +40,11 @@ npx cloudflared tunnel --url http://localhost:3000
 ngrok http 3000
 ```
 
-它會給你一個 `https://xxxx.trycloudflare.com`（或 `https://xxxx.ngrok-free.app`）的網址，先記下來，下一步會用到。
+它會給你一個 `https://xxxx.trycloudflare.com`（或 `https://xxxx.ngrok-free.app`）的網址，先記下來，下一步會用到。畫面會長這樣，黃色那一行就是你的網址：
+
+![臨時通道：在另一個視窗執行指令，複製黃色那一行網址](img/url-a-quick-tunnel.png)
+
+這個視窗要一直開著，關掉網址就失效。有自己的網域、想要固定的網址，改看 [06-cloudflare-domain.md](06-cloudflare-domain.md)。
 
 > 臨時通道每次重開網址都會變。變了之後，設定精靈裡的「對外網址」和 LINE 後台的 Endpoint URL 都要跟著改。正式使用請看 [03-deploy.md](03-deploy.md)。
 
