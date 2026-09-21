@@ -11,6 +11,11 @@
                         會後自動產生摘要 ─→ 再用同一招把「摘要卡」分享出去（選用）
 ```
 
+> **使用前請先看這一段**
+>
+> **請不要未經公司允許，擅自使用於公司的客戶會議。客戶與會議內容有可能屬於公司的機密資產。**
+> 機器人進會議會錄音並產生逐字稿，請事先取得同意、告知所有與會者，並遵守公司的保密規定與當地法規。設定精靈的第一步會請你確認這件事，沒確認之前不能派機器人。
+
 ## 長什麼樣子
 
 後台：建立會議、複製 LINE 分享連結、派機器人、看每一場的狀態。
@@ -45,9 +50,7 @@
 
 ## 快速開始
 
-下面的指令請一行一行貼，不要整段一起貼（Windows 的命令提示字元不認得 `#` 註解）。
-
-**1. 下載與安裝**
+不用改任何檔案，三行指令加一個網頁精靈。指令請一行一行貼。
 
 ```bash
 git clone https://github.com/arcusdigitaltw/line-meeting-card.git
@@ -55,33 +58,24 @@ cd line-meeting-card
 npm install
 ```
 
-**2. 建立設定檔 `.env`**
-
-Windows（命令提示字元或 PowerShell）：
-
-```bash
-copy .env.example .env
-notepad .env
-```
-
-Mac／Linux：
-
-```bash
-cp .env.example .env
-nano .env
-```
-
-至少填 `PUBLIC_URL`、`LIFF_ID`、`ADMIN_TOKEN` 三項，存檔。
-
-**3. 啟動**
-
 ```bash
 npm start
 ```
 
-打開 `http://localhost:3000/admin.html`，輸入你設的 `ADMIN_TOKEN`。
+啟動後，視窗裡會出現一組 **6 位數的設定碼**。用瀏覽器打開 `http://localhost:3000/setup.html`，照著精靈一步一步做：
 
-需要 Node.js 18 以上。只依賴 `express` 和 `dotenv` 兩個套件，資料存在 `data/meetings.json`，不用裝資料庫。
+1. 閱讀使用提醒
+2. 用設定碼設定後台密碼
+3. 確認對外網址（LINE 只接受 https）
+4. 綁定 LINE：圖解帶你在 LINE Developers 建立 LIFF，貼回 LIFF ID
+5. 會議機器人：貼上 Recall.ai 的 API Key，當場測試能不能用（可跳過）
+6. AI 摘要：貼上語言模型的金鑰（可跳過）
+
+![設定精靈：綁定 LINE](docs/img/setup-3-line.png)
+
+設定存在 `data/config.json`，存完立刻生效，不用重啟。習慣用 `.env` 的人也可以照 `.env.example` 設定，環境變數的優先權比精靈高。
+
+需要 Node.js 18 以上。只依賴 `express` 和 `dotenv` 兩個套件，不用裝資料庫。
 
 ## 專案結構
 
@@ -89,6 +83,7 @@ npm start
 line-meeting-card/
 ├── server.js            所有網址路由、後台權限、每分鐘的機器人排程
 ├── lib/
+│   ├── config.js        設定：環境變數優先，其次是設定精靈存的 data/config.json；後台密碼存雜湊
 │   ├── card.js          ★ 卡片核心：Flex Message、.ics、Google 行事曆（純函式，最適合拿來改）
 │   ├── store.js         資料層：讀寫 data/meetings.json
 │   ├── recall.js        會議機器人：派出、查狀態、下載逐字稿
@@ -97,10 +92,14 @@ line-meeting-card/
 │   ├── share.html       ★ LIFF 分享頁（LIFF 的 Endpoint URL 就填這一頁）
 │   ├── invite.html      會議邀請頁（收到卡片的人點「查看完整資訊」會到這裡）
 │   ├── summary.html     會後摘要頁
+│   ├── setup.html       ★ 設定精靈：密碼、對外網址、綁定 LINE、Recall 金鑰、AI 金鑰
 │   └── admin.html       後台
 ├── scripts/
 │   ├── print-flex.js    印出卡片 JSON，貼到 LINE 官方模擬器預覽
-│   └── smoke.js         不用連 LINE 的整體自我檢查
+│   ├── smoke.js         不用連 LINE 的整體自我檢查
+│   ├── smoke-setup.js   設定精靈的自我檢查
+│   ├── check-pages.js   檢查每一頁前端程式的語法
+│   └── screenshots.js   重新產生 docs/img 的截圖
 ├── test/card.test.js    單元測試
 ├── docs/                教學
 ├── CLAUDE.md            給 Claude Code 看的專案說明
@@ -119,7 +118,8 @@ line-meeting-card/
 
 ## 安全上要知道的事
 
-- 後台所有操作都要帶 `ADMIN_TOKEN`。請設長一點的亂碼，不要用生日或公司名。
+- 後台所有操作都要密碼。密碼在設定精靈裡設（至少 10 個字，只存雜湊不存明文）；第一次設密碼需要啟動視窗裡的設定碼，避免別人搶先幫你設。連續猜錯 10 次會被擋 15 分鐘。
+- Recall 與語言模型的金鑰存在你自己主機的 `data/config.json`（或 `.env`），後台只會顯示最後四碼。
 - 邀請頁與摘要頁靠「猜不到的網址」保護，拿到連結的人就看得到。**邀請卡只公開標題、時間、地點、會議連結**；逐字稿與摘要走另一組代碼，不會因為轉傳邀請卡而外流。
 - 會議密碼會顯示在卡片上。不想公開就不要填，改用含密碼的會議連結。
 - 機器人進會議時會在聊天室自我介紹並說明正在記錄。錄音錄影請遵守當地法規，並事先告知與會者。

@@ -37,15 +37,16 @@
   .empty{color:var(--mute);text-align:center;padding:40px 0}
   .gate{max-width:380px;margin:12vh auto;text-align:center}
   .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#0b0b0d;color:#fff;padding:11px 20px;border-radius:100px;font-size:14px;opacity:0;transition:.3s;pointer-events:none}.toast.on{opacity:1}
+  .warn{margin-top:10px;font-size:13px;line-height:1.7;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:10px 12px}
   [hidden]{display:none!important}
 </style>
 </head>
 <body>
-<header><b id="brand">會議資訊卡・後台</b><div class="chips"><span id="cLiff">LIFF</span><span id="cBot">會議機器人</span><span id="cAi">AI 摘要</span></div><button id="logout" hidden>登出</button></header>
+<header><b id="brand">會議資訊卡・後台</b><div class="chips"><span id="cLiff">LIFF</span><span id="cBot">會議機器人</span><span id="cAi">AI 摘要</span></div><button id="toSetup" onclick="location.href='/setup.html'">設定</button><button id="logout" hidden>登出</button></header>
 
 <div class="gate panel" id="gate">
   <h2>輸入管理密碼</h2>
-  <p style="font-size:14px;color:var(--soft)">就是你在 .env 裡設定的 ADMIN_TOKEN。只會存在這個瀏覽器。</p>
+  <p style="font-size:14px;color:var(--soft)">就是你在設定精靈裡設的那一組（或 .env 的 ADMIN_TOKEN）。只會存在這個瀏覽器。</p>
   <input id="tok" type="password" placeholder="ADMIN_TOKEN" style="margin-top:14px" autocomplete="current-password">
   <button class="primary full" id="login">進入後台</button>
 </div>
@@ -61,7 +62,8 @@
     <label>主辦單位／主辦人</label><input name="organizer" maxlength="60">
     <label>簡短說明</label><textarea name="description" maxlength="2000"></textarea>
     <label>封面圖網址（https 的 JPG／PNG，可不填）</label><input name="cover" placeholder="https://…jpg">
-    <label class="check"><input type="checkbox" name="auto_bot"><span>會議開始前 2 分鐘自動派機器人進去記錄<br><small style="color:var(--mute)">需要先設定 RECALL_API_KEY，而且要有會議連結</small></span></label>
+    <label class="check"><input type="checkbox" name="auto_bot"><span>會議開始前 2 分鐘自動派機器人進去記錄<br><small style="color:var(--mute)">需要先在「設定」填好 Recall 金鑰，而且要有會議連結</small></span></label>
+    <p class="warn">請不要未經公司允許，擅自用在公司的客戶會議上。客戶與會議內容有可能屬於公司的機密資產；機器人會錄音，請事先告知所有與會者。</p>
     <button class="primary full" type="submit" id="save">建立會議</button>
     <button class="full" type="button" id="cancel" hidden>取消編輯</button>
   </form>
@@ -105,7 +107,9 @@ function render() {
     card.appendChild(acts); box.appendChild(card);
   });
 }
-function act(m, path, ok) { api('POST', '/api/meetings/' + m.id + '/' + path).then(function () { toast(ok); load(); }).catch(function (e) { toast(e.message); load(); }); }
+var BOT_WARN = ['派機器人進「%T」？', '', '機器人會進會議錄音並產生逐字稿。', '請不要未經公司允許，擅自用在公司的客戶會議上。客戶與會議內容有可能屬於公司的機密資產。', '請確認你已經取得同意，也已經告知與會者。'].join('\n');
+function act(m, path, ok) {
+  if (path === 'bot' && !confirm(BOT_WARN.replace('%T', m.title))) return; api('POST', '/api/meetings/' + m.id + '/' + path).then(function () { toast(ok); load(); }).catch(function (e) { toast(e.message); load(); }); }
 function edit(m) {
   EDIT = m.id; var f = $('form');
   ['title', 'join_url', 'passcode', 'location', 'address', 'organizer', 'description', 'cover'].forEach(function (k) { f[k].value = m[k] || ''; });
@@ -130,6 +134,7 @@ $('login').onclick = function () { TOKEN = $('tok').value.trim(); enter(); };
 $('tok').onkeydown = function (e) { if (e.key === 'Enter') $('login').click(); };
 $('logout').onclick = function () { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); };
 fetch('/api/config').then(function (r) { return r.json(); }).then(function (c) {
+  if (c.needs_setup) { location.replace('/setup.html'); return; }
   document.documentElement.style.setProperty('--accent', c.accent); $('brand').textContent = c.brand + '・後台';
   if (c.liff_ready) $('cLiff').className = 'on'; if (c.bot_ready) $('cBot').className = 'on'; if (c.summary_ready) $('cAi').className = 'on';
 });

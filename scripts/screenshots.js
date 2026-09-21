@@ -4,10 +4,12 @@
  * 不會動到你真正的 data/meetings.json，也不會連 LINE／Recall。
  */
 const path = require('path'), os = require('os'), fs = require('fs');
-process.env.ADMIN_TOKEN = 'demo'; process.env.LIFF_ID = '1234567890-AbCdEfGh'; process.env.PUBLIC_URL = 'https://meet.example.tw';
-process.env.RECALL_API_KEY = 'demo'; process.env.LLM_API_KEY = 'demo'; process.env.BRAND_NAME = '範例公司'; process.env.ORGANIZER_NAME = '範例公司';
-process.env.DATA_FILE = path.join(os.tmpdir(), `lmc-shots-${Date.now()}.json`);
-const { app } = require('../server');
+for (const k of ['ADMIN_TOKEN', 'LIFF_ID', 'PUBLIC_URL', 'RECALL_API_KEY', 'LLM_API_KEY']) process.env[k] = '';   // 全部走設定精靈，才截得到精靈的畫面
+process.env.BRAND_NAME = '範例公司'; process.env.ORGANIZER_NAME = '範例公司';
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'lmc-shots-'));
+process.env.DATA_FILE = path.join(TMP, 'meetings.json'); process.env.CONFIG_FILE = path.join(TMP, 'config.json');
+const { app, SETUP_CODE } = require('../server');
+const PW = 'demo-password-2026';
 const store = require('../lib/store');
 let chromium;
 try { ({ chromium } = require(process.env.PLAYWRIGHT_PATH || 'playwright-core')); } catch (e) { console.error('請先安裝：npm i -D playwright-core'); process.exit(1); }
@@ -29,10 +31,21 @@ const srv = app.listen(0, async () => {
 
   const b = await chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || 'msedge', headless: true });
   const desk = await b.newContext({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 2, locale: 'zh-TW', timezoneId: 'Asia/Taipei' });
-  let p = await desk.newPage();
+  let p = await desk.newPage(); 
+  // 設定精靈：一步一步截
+  const shot = async (name, full) => { await p.waitForTimeout(500); await p.screenshot({ path: path.join(OUT, name + '.png'), fullPage: !!full }); };
+  await p.goto(`${base}/setup.html`); await p.waitForTimeout(600);
+  await p.check('#ack'); await shot('setup-0-notice', true);
+  await p.evaluate(() => document.getElementById('n0').click()); await p.fill('#code', SETUP_CODE); await p.fill('#pw1', PW); await p.fill('#pw2', PW); await shot('setup-1-password', true);
+  await p.evaluate(() => document.getElementById('n1').click()); await p.waitForTimeout(600); await p.fill('#pub', 'https://meet.example.tw'); await shot('setup-2-url', true);
+  await p.evaluate(() => document.getElementById('n2').click()); await p.waitForTimeout(600); await p.fill('#liff', '1234567890-AbCdEfGh'); await shot('setup-3-line', true);
+  await p.evaluate(() => document.getElementById('n3').click()); await p.waitForTimeout(600); await p.fill('#rkey', 'demo-recall-key-a1b2'); await shot('setup-4-recall', true);
+  await p.evaluate(() => document.getElementById('n4').click()); await p.waitForTimeout(900); await p.fill('#lkey', 'demo-llm-key-c3d4'); await shot('setup-5-ai', true);
+  await p.evaluate(() => document.getElementById('n5').click()); await p.waitForTimeout(600); await shot('setup-6-done', true);
+  await p.evaluate(() => localStorage.clear());
   await p.goto(`${base}/admin.html`); await p.waitForTimeout(500);
   await p.screenshot({ path: path.join(OUT, 'admin-login.png') });
-  await p.fill('#tok', 'demo'); await p.click('#login'); await p.waitForTimeout(1200);
+  await p.fill('#tok', PW); await p.click('#login'); await p.waitForTimeout(1500);
   await p.screenshot({ path: path.join(OUT, 'admin.png'), fullPage: true });
   await p.locator('.m button', { hasText: '編輯' }).first().click(); await p.waitForTimeout(500);
   await p.screenshot({ path: path.join(OUT, 'admin-edit.png') });
@@ -40,6 +53,6 @@ const srv = app.listen(0, async () => {
   for (const [name, url] of [['invite-page', `/i/${a.invite_token}`], ['summary-page', `/s/${d.summary_token}`]]) {
     p = await mob.newPage(); await p.goto(base + url); await p.waitForTimeout(1200); await p.screenshot({ path: path.join(OUT, name + '.png'), fullPage: true });
   }
-  await b.close(); srv.close(); try { fs.unlinkSync(process.env.DATA_FILE); } catch (x) {}
+  await b.close(); srv.close(); fs.rmSync(TMP, { recursive: true, force: true });
   console.log('已輸出到', OUT); process.exitCode = 0;
 });

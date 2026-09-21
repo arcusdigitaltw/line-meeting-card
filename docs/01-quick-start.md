@@ -16,18 +16,6 @@
 npm install
 ```
 
-建立設定檔。Windows 用：
-
-```bash
-copy .env.example .env
-```
-
-Mac／Linux 用：
-
-```bash
-cp .env.example .env
-```
-
 然後跑自我檢查：
 
 ```bash
@@ -52,41 +40,40 @@ npx cloudflared tunnel --url http://localhost:3000
 ngrok http 3000
 ```
 
-它會給你一個 `https://xxxx.trycloudflare.com`（或 `https://xxxx.ngrok-free.app`）的網址。用記事本打開 `.env`（Windows 打 `notepad .env`，Mac／Linux 打 `nano .env`），把它填進去：
+它會給你一個 `https://xxxx.trycloudflare.com`（或 `https://xxxx.ngrok-free.app`）的網址，先記下來，下一步會用到。
 
-```
-PUBLIC_URL=https://xxxx.trycloudflare.com
-```
+> 臨時通道每次重開網址都會變。變了之後，設定精靈裡的「對外網址」和 LINE 後台的 Endpoint URL 都要跟著改。正式使用請看 [03-deploy.md](03-deploy.md)。
 
-> 臨時通道每次重開網址都會變。變了之後 `.env` 的 `PUBLIC_URL` 和 LINE 後台的 Endpoint URL 都要跟著改。正式使用請看 [03-deploy.md](03-deploy.md)。
+## 步驟三：打開設定精靈
 
-## 步驟三：建立 LIFF，拿到 LIFF ID
-
-照 [02-line-liff.md](02-line-liff.md) 的「建立 LIFF」做完，把 LIFF ID 填進 `.env`：
-
-```
-LIFF_ID=1234567890-AbCdEfGh
-```
-
-## 步驟四：設後台密碼，啟動
-
-產生一組亂碼當密碼：
-
-```bash
-node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"
-```
-
-填進 `.env` 的 `ADMIN_TOKEN`，然後：
+啟動程式：
 
 ```bash
 npm start
 ```
 
-**成功的樣子**：終端機顯示「已啟動」，而且**沒有**出現「還沒填 LIFF_ID」「PUBLIC_URL 不是 https」這類提醒。
+視窗裡會出現一行「設定碼：123456」。用瀏覽器打開**步驟二拿到的 https 網址**加上 `/setup.html`，例如 `https://xxxx.trycloudflare.com/setup.html`。
 
-## 步驟五：建一場會議，傳出去
+精靈會帶你做完這些事，每一步都有圖解：
 
-1. 瀏覽器開 `https://你的網址/admin.html`，輸入 `ADMIN_TOKEN`。右上角「LIFF」標籤是綠色的才對。
+| 步驟 | 做什麼 |
+|---|---|
+| 使用提醒 | 確認你不會未經公司允許，用在公司的客戶會議上 |
+| 後台密碼 | 輸入視窗裡的設定碼，設一組至少 10 個字的密碼 |
+| 對外網址 | 確認是 https 的網址 |
+| 綁定 LINE | 照圖在 LINE Developers 建立 LIFF，把 LIFF ID 貼回來 |
+| 會議機器人 | 貼上 Recall.ai 的 API Key，按「測試金鑰」（可跳過） |
+| AI 摘要 | 貼上語言模型的金鑰（可跳過） |
+
+![設定精靈](img/setup-3-line.png)
+
+**成功的樣子**：最後一頁「設定完成」裡，後台密碼、對外網址、綁定 LINE 三項都是綠色。
+
+> 想了解每個 LINE 設定背後的原因，看 [02-line-liff.md](02-line-liff.md)。
+
+## 步驟四：建一場會議，傳出去
+
+1. 在精靈最後一頁按「進入後台」。右上角「LIFF」標籤是綠色的才對。
 2. 左邊填會議名稱、時間、會議連結，按「建立會議」。
 3. 在右邊那場會議按「複製 LINE 分享連結」。
 4. 把連結貼到 LINE 的任何聊天室（傳給自己的「Keep 筆記」最方便），**在手機上點開**。
@@ -99,7 +86,8 @@ npm start
 | 你看到的 | 多半是 |
 |---|---|
 | 點開連結是白畫面，或顯示 400 | LINE 後台的 Endpoint URL 沒填對，要是 `https://你的網址/share.html` |
-| 「站長還沒設定 LIFF ID」 | `.env` 的 `LIFF_ID` 沒填，或填完沒重啟 |
+| 「站長還沒設定 LIFF ID」 | 設定精靈的「綁定 LINE」還沒做完 |
+| 設定碼不對 | 設定碼每次啟動都會換，請看「現在這一次」`npm start` 的視窗 |
 | 「這個 LIFF 還不能分享」 | LIFF 設定裡的 Share target picker 沒打開 |
 | 只有你自己能用，朋友點開說沒有權限 | LINE Login channel 還在 Developing，要改成 Published |
 | 選了人、按了傳送，但什麼都沒發生 | 卡片裡有空字串，跑 `npm test` 看哪裡壞了 |

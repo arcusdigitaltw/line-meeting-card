@@ -22,7 +22,7 @@ const srv = app.listen(0, async () => {
     ok('沒摘要時摘要卡 404', (await fetch(`${base}/api/card/summary/${m.summary_token}`)).status === 404);
     ok('亂猜代碼 404', (await fetch(`${base}/api/card/invite/nope`)).status === 404);
     const bad = await fetch(`${base}/api/meetings`, { method: 'POST', headers: H, body: JSON.stringify({ title: 'x', cover: 'https://a.tw/a.webp' }) }); ok('WebP 封面被擋', bad.status === 400);
-    const bot = await fetch(`${base}/api/meetings/${m.id}/bot`, { method: 'POST', headers: H }); ok('沒設 Recall 金鑰時派機器人回清楚的錯誤', bot.status === 400 && (await bot.json()).error.includes('RECALL_API_KEY'));
+    const bot = await fetch(`${base}/api/meetings/${m.id}/bot`, { method: 'POST', headers: H }); ok('沒設 Recall 金鑰時派機器人回清楚的錯誤', bot.status === 400 && (await bot.json()).error.includes('Recall'));
     ok('刪除', (await (await fetch(`${base}/api/meetings/${m.id}`, { method: 'DELETE', headers: H })).json()).success === true);
   } catch (e) { console.error(e); fail++; }
   srv.close(); try { require('fs').unlinkSync(process.env.DATA_FILE); } catch (e) {}

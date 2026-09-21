@@ -23,15 +23,21 @@ const card = require('./lib/card');
 const recall = require('./lib/recall');
 const ai = require('./lib/summary');
 
+const config = require('./lib/config');
+
 const PORT = process.env.PORT || 3000;
-const PUBLIC_URL = (process.env.PUBLIC_URL || `http://localhost:${PORT}`).replace(/\/+$/, '');
-const LIFF_ID = process.env.LIFF_ID || '';
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '';
-const TZ = process.env.TIMEZONE || 'Asia/Taipei';
-const BRAND = process.env.BRAND_NAME || '會議資訊卡';
-const ACCENT = process.env.ACCENT_COLOR || '#0EA5E9';
-const BOT_NAME = process.env.BOT_NAME || `${BRAND}・會議記錄`;
-const OPT = { timezone: TZ, accent: ACCENT, organizer: process.env.ORGANIZER_NAME || '' };
+// 設定可以在瀏覽器的設定精靈裡改，所以每次用的時候才讀，不在啟動時寫死
+const C = {
+  get publicUrl() { return (config.get('PUBLIC_URL') || `http://localhost:${PORT}`).replace(/\/+$/, ''); },
+  get liffId() { return config.get('LIFF_ID'); },
+  get tz() { return config.get('TIMEZONE'); },
+  get brand() { return config.get('BRAND_NAME'); },
+  get accent() { return config.get('ACCENT_COLOR'); },
+  get botName() { return config.get('BOT_NAME') || `${config.get('BRAND_NAME')}・會議記錄`; },
+  get opt() { return { timezone: this.tz, accent: this.accent, organizer: config.get('ORGANIZER_NAME') }; },
+};
+/** 第一次設定用的一次性設定碼：只印在你自己的終端機，避免別人搶先幫你設密碼 */
+const SETUP_CODE = String(require('crypto').randomInt(100000, 999999));
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
@@ -39,13 +45,13 @@ app.use(express.json({ limit: '1mb' }));
 /* ── 小工具 ── */
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const urlsOf = m => ({
-  page: `${PUBLIC_URL}/i/${m.invite_token}`,
-  ics: `${PUBLIC_URL}/api/card/invite/${m.invite_token}/ics`,
-  google: `${PUBLIC_URL}/api/card/invite/${m.invite_token}/google`,
-  summary: `${PUBLIC_URL}/s/${m.summary_token}`,
+  page: `${C.publicUrl}/i/${m.invite_token}`,
+  ics: `${C.publicUrl}/api/card/invite/${m.invite_token}/ics`,
+  google: `${C.publicUrl}/api/card/invite/${m.invite_token}/google`,
+  summary: `${C.publicUrl}/s/${m.summary_token}`,
 });
 /** LIFF 分享網址：在 LINE 裡點這個連結，就會開分享頁並跳出「選擇傳送對象」 */
-const shareUrl = q => (LIFF_ID ? `https://liff.line.me/${LIFF_ID}?${q}` : null);
+const shareUrl = q => (C.liffId ? `https://liff.line.me/${C.liffId}?${q}` : null);
 
 /** 「TIMEZONE 當地的 YYYY-MM-DDTHH:MM」→ UTC ISO 字串（後台表單送進來的是當地時間） */
 function localToIso(v) {
@@ -54,19 +60,21 @@ function localToIso(v) {
   const [d, t = '00:00'] = String(v).split('T'); const [y, mo, da] = d.split('-').map(Number); const [hh, mm] = t.split(':').map(Number);
   const guess = Date.UTC(y, mo - 1, da, hh || 0, mm || 0);
   const p = {};
-  for (const x of new Intl.DateTimeFormat('en-US', { timeZone: TZ, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).formatToParts(new Date(guess))) p[x.type] = x.value;
+  for (const x of new Intl.DateTimeFormat('en-US', { timeZone: C.tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).formatToParts(new Date(guess))) p[x.type] = x.value;
   const offset = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second) - guess;
   return new Date(guess - offset).toISOString();
 }
 
-/** 常數時間比對，避免用回應時間猜出管理密碼 */
-function sameToken(a, b) {
-  const x = Buffer.from(String(a || '')), y = Buffer.from(String(b || ''));
-  return x.length === y.length && x.length > 0 && crypto.timingSafeEqual(x, y);
-}
+/** 同一個來源 15 分鐘內猜錯 10 次就先擋下，避免被暴力猜密碼 */
+const fails = new Map();
+function tooManyFails(ip) { const f = fails.get(ip); return !!f && f.n >= 10 && Date.now() - f.t < 15 * 60000; }
+function noteFail(ip) { const f = fails.get(ip); if (!f || Date.now() - f.t > 15 * 60000) fails.set(ip, { n: 1, t: Date.now() }); else f.n++; }
 function admin(req, res, next) {
-  if (!ADMIN_TOKEN) return res.status(503).json({ error: '還沒設定 ADMIN_TOKEN，管理功能已停用' });
-  if (!sameToken(req.get('x-admin-token'), ADMIN_TOKEN)) return res.status(401).json({ error: '管理密碼不正確' });
+  if (!config.hasPassword()) return res.status(503).json({ error: '還沒設定後台密碼，請先到 /setup.html 完成設定', needs_setup: true });
+  const ip = req.ip || 'x';
+  if (tooManyFails(ip)) return res.status(429).json({ error: '密碼錯太多次，請 15 分鐘後再試' });
+  if (!config.checkPassword(req.get('x-admin-token'))) { noteFail(ip); return res.status(401).json({ error: '管理密碼不正確' }); }
+  fails.delete(ip);
   next();
 }
 
@@ -87,13 +95,40 @@ function view(m) {
   const u = urlsOf(m);
   return {
     ...m, transcript: undefined, transcript_count: (m.transcript || []).length,
-    when_label: card.whenLabel(m, TZ), page_url: u.page, summary_url: u.summary,
+    when_label: card.whenLabel(m, C.tz), page_url: u.page, summary_url: u.summary,
     share_invite_url: shareUrl(`invite=${m.invite_token}`), share_summary_url: m.summary ? shareUrl(`summary=${m.summary_token}`) : null,
   };
 }
 
 /* ── 公開：卡片資料 ── */
-app.get('/api/config', (req, res) => res.json({ brand: BRAND, accent: ACCENT, liff_ready: !!LIFF_ID, bot_ready: recall.enabled(), summary_ready: ai.enabled() }));
+app.get('/api/config', (req, res) => res.json({ brand: C.brand, accent: C.accent, liff_ready: !!C.liffId, bot_ready: recall.enabled(), summary_ready: ai.enabled(), needs_setup: !config.hasPassword() }));
+
+/* ── 設定精靈 ── */
+// 還沒有密碼時：用終端機上的設定碼設第一組密碼。有密碼之後這個入口就關閉。
+app.post('/api/setup/password', (req, res) => {
+  if (config.hasPassword()) return res.status(409).json({ error: '已經設定過密碼了。要改密碼請登入後台的「設定」。' });
+  const ip = req.ip || 'x';
+  if (tooManyFails(ip)) return res.status(429).json({ error: '設定碼錯太多次，請 15 分鐘後再試' });
+  if (String((req.body || {}).setup_code || '').trim() !== SETUP_CODE) { noteFail(ip); return res.status(401).json({ error: '設定碼不對。請看執行 npm start 的那個視窗，上面有一組 6 位數字。' }); }
+  try { config.setPassword((req.body || {}).password); res.json({ success: true }); } catch (e) { res.status(400).json({ error: e.message }); }
+});
+app.get('/api/settings', admin, (req, res) => res.json({ settings: config.publicView(), regions: config.REGIONS, endpoint_url: `${C.publicUrl}/share.html`, https: /^https:\/\//.test(C.publicUrl) }));
+app.post('/api/settings', admin, (req, res) => {
+  try {
+    const b = req.body || {};
+    if (b.new_password) { if (config.fromEnv('ADMIN_TOKEN')) throw new Error('密碼目前由 .env 的 ADMIN_TOKEN 決定，請改 .env'); config.setPassword(b.new_password); }
+    config.set(b);
+    res.json({ settings: config.publicView(), endpoint_url: `${C.publicUrl}/share.html`, https: /^https:\/\//.test(C.publicUrl) });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+// 存之前先實際問 Recall 一次，金鑰或區域錯了當場就知道
+app.post('/api/settings/test-recall', admin, async (req, res) => {
+  const b = req.body || {};
+  const apiKey = String(b.api_key || '').trim() || config.get('RECALL_API_KEY');
+  if (!apiKey) return res.status(400).json({ error: '請先貼上 API Key' });
+  try { res.json(await recall.testKey(apiKey, config.REGIONS.includes(b.region) ? b.region : config.get('RECALL_REGION'))); }
+  catch (e) { res.json({ ok: false, reason: '連不到 Recall：' + e.message }); }
+});
 
 app.get('/api/card/:kind/:token', (req, res) => {
   const { kind, token } = req.params;
@@ -101,20 +136,20 @@ app.get('/api/card/:kind/:token', (req, res) => {
   const m = store.getByToken(kind === 'invite' ? 'invite_token' : 'summary_token', token);
   if (!m || (kind === 'summary' && !m.summary)) return res.status(404).json({ error: '找不到這場會議，或連結已失效' });
   const u = urlsOf(m);
-  const flex = kind === 'invite' ? card.buildInviteFlex(m, u, OPT) : card.buildSummaryFlex(m, u, OPT);
-  const when = card.whenLabel(m, TZ);
-  const pub = { title: m.title, when_label: when, brand: BRAND, accent: ACCENT, liff_id: LIFF_ID || null, flex,
+  const flex = kind === 'invite' ? card.buildInviteFlex(m, u, C.opt) : card.buildSummaryFlex(m, u, C.opt);
+  const when = card.whenLabel(m, C.tz);
+  const pub = { title: m.title, when_label: when, brand: C.brand, accent: C.accent, liff_id: C.liffId || null, flex,
     alt_text: card.clip(`${kind === 'invite' ? '會議邀請' : '會議摘要'}：${m.title}${when ? `｜${when}` : ''}`, 380),
     share_url: shareUrl(`${kind}=${token}`) };
   // 邀請卡只公開「標題、時間、地點、會議連結」；逐字稿與摘要只在摘要卡那條連結才看得到
-  if (kind === 'invite') Object.assign(pub, { description: m.description, location: m.location, address: m.address, join_url: m.join_url, passcode: m.passcode, organizer: m.organizer || OPT.organizer, cover: m.cover, ics_url: u.ics, google_url: u.google, page_url: u.page });
+  if (kind === 'invite') Object.assign(pub, { description: m.description, location: m.location, address: m.address, join_url: m.join_url, passcode: m.passcode, organizer: m.organizer || C.opt.organizer, cover: m.cover, ics_url: u.ics, google_url: u.google, page_url: u.page });
   else Object.assign(pub, { summary: m.summary, summary_points: m.summary_points, action_items: m.action_items, page_url: u.summary });
   res.json(pub);
 });
 
 app.get('/api/card/invite/:token/ics', (req, res) => {
   const m = store.getByToken('invite_token', req.params.token);
-  const ics = m && card.buildIcs(m, urlsOf(m), { host: new URL(PUBLIC_URL).host });
+  const ics = m && card.buildIcs(m, urlsOf(m), { host: new URL(C.publicUrl).host });
   if (!ics) return res.status(404).send('not found');
   res.set({ 'Content-Type': 'text/calendar; charset=utf-8', 'Content-Disposition': 'attachment; filename="meeting.ics"' }).send(ics);
 });
@@ -122,7 +157,7 @@ app.get('/api/card/invite/:token/ics', (req, res) => {
 // Google 行事曆網址帶中文很容易超過 Flex 按鈕的 1000 字上限，所以卡片上放這個短網址，再轉過去
 app.get('/api/card/invite/:token/google', (req, res) => {
   const m = store.getByToken('invite_token', req.params.token);
-  const url = m && card.googleCalendarUrl(m, urlsOf(m), TZ);
+  const url = m && card.googleCalendarUrl(m, urlsOf(m), C.tz);
   if (!url) return res.status(404).send('not found');
   res.redirect(302, url);
 });
@@ -134,7 +169,7 @@ function page(file, field) {
     const m = store.getByToken(field, req.params.token);
     if (!m || (field === 'summary_token' && !m.summary)) return res.status(404).send('找不到這場會議，或連結已失效');
     const title = `${field === 'invite_token' ? '會議邀請' : '會議摘要'}｜${m.title}`;
-    const desc = [card.whenLabel(m, TZ), m.location || (m.join_url ? '線上會議' : '')].filter(Boolean).join('・') || BRAND;
+    const desc = [card.whenLabel(m, C.tz), m.location || (m.join_url ? '線上會議' : '')].filter(Boolean).join('・') || C.brand;
     res.set('Cache-Control', 'no-store').send(tpl.replace(/__OG_TITLE__/g, esc(title)).replace(/__OG_DESC__/g, esc(desc)).replace(/__OG_IMAGE__/g, esc(card.flexImage(m.cover) || '')).replace(/__TOKEN__/g, esc(req.params.token)));
   };
 }
@@ -166,14 +201,15 @@ app.get('/api/meetings/:id/transcript', admin, (req, res) => {
 
 /* ── 會議機器人 ── */
 async function deploy(m) {
-  if (!recall.enabled()) throw new Error('還沒設定 RECALL_API_KEY');
+  if (!recall.enabled()) throw new Error('還沒設定 Recall 的 API Key，請到後台「設定」完成');
+  if (!config.acked()) throw new Error('請先到後台「設定」閱讀並勾選「會議記錄的使用提醒」，才能派機器人');
   if (!card.isHttp(m.join_url)) throw new Error('這場會議沒有會議連結，機器人不知道要去哪裡');
   if (['joining', 'in_call'].includes(m.bot.status)) throw new Error('機器人已經在路上或在會議裡了');
   // 先佔位再打 API，避免排程和手動同時派出兩個機器人
   store.update(m.id, { bot: { ...m.bot, status: 'joining', error: null, attempts: (m.bot.attempts || 0) + 1 } });
   try {
-    const bot = await recall.deployBot({ meetingUrl: m.join_url.trim(), botName: BOT_NAME, language: m.language,
-      joinMessage: `大家好，我是「${BOT_NAME}」，由 ${m.organizer || OPT.organizer || '主辦人'} 邀請來記錄這場會議，會後會整理摘要給與會者。` });
+    const bot = await recall.deployBot({ meetingUrl: m.join_url.trim(), botName: C.botName, language: m.language,
+      joinMessage: `大家好，我是「${C.botName}」，由 ${m.organizer || C.opt.organizer || '主辦人'} 邀請來記錄這場會議，會後會整理摘要給與會者。` });
     return store.update(m.id, { bot: { ...store.get(m.id).bot, id: bot.id, status: 'joining' } });
   } catch (e) {
     store.update(m.id, { bot: { ...store.get(m.id).bot, status: 'failed', error: e.message } });
@@ -228,11 +264,11 @@ app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] })
 
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(`line-meeting-card 已啟動：${PUBLIC_URL}（後台 ${PUBLIC_URL}/admin.html）`);
-    if (!/^https:\/\//.test(PUBLIC_URL)) console.log('提醒：PUBLIC_URL 不是 https，LINE 的卡片按鈕與 LIFF 都需要 https。本機測試請搭配 ngrok 或 cloudflared。');
-    if (!LIFF_ID) console.log('提醒：還沒填 LIFF_ID，分享功能會顯示設定引導。');
-    if (!ADMIN_TOKEN) console.log('提醒：還沒填 ADMIN_TOKEN，後台無法使用。');
+    console.log(`line-meeting-card 已啟動：${C.publicUrl}（後台 ${C.publicUrl}/admin.html）`);
+    if (!/^https:\/\//.test(C.publicUrl)) console.log('提醒：C.publicUrl 不是 https，LINE 的卡片按鈕與 LIFF 都需要 https。本機測試請搭配 ngrok 或 cloudflared。');
+    if (!config.hasPassword()) console.log(`\n  第一次使用？請用瀏覽器打開 ${C.publicUrl}/setup.html\n  設定碼：${SETUP_CODE}（只會顯示在這個視窗，每次啟動都不一樣）\n`);
+    else if (!C.liffId) console.log(`提醒：還沒綁定 LINE（LIFF ID）。請到 ${C.publicUrl}/setup.html 繼續設定。`);
     setInterval(() => tick().catch(() => {}), 60000);
   });
 }
-module.exports = { app, localToIso, tick };
+module.exports = { app, localToIso, tick, SETUP_CODE };

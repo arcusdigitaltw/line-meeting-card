@@ -1,4 +1,4 @@
 <!DOCTYPE html>
 <html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>會議資訊卡</title><meta name="robots" content="noindex">
 <style>body{font-family:-apple-system,"Noto Sans TC",sans-serif;background:#f4f3ef;color:#0b0b0d;display:grid;place-items:center;min-height:100vh;margin:0;text-align:center;padding:24px}a{display:inline-block;margin-top:18px;padding:13px 26px;border-radius:12px;background:#0EA5E9;color:#fff;text-decoration:none;font-weight:700}</style></head>
-<body><div><h1>會議資訊卡</h1><p>服務運作中。會議邀請請使用主辦人給你的連結。</p><a href="/admin.html">進入後台</a></div></body></html>
+<body><div><h1>會議資訊卡</h1><p>服務運作中。會議邀請請使用主辦人給你的連結。</p><a href="/admin.html">進入後台</a><script>fetch("/api/config").then(function(r){return r.json()}).then(function(c){if(c.needs_setup)location.replace("/setup.html")})</script></div></body></html>

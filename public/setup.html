@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>設定精靈｜會議資訊卡</title>
+<meta name="robots" content="noindex,nofollow">
+<style>
+  :root{--accent:#0EA5E9;--ink:#0b0b0d;--soft:#54524d;--mute:#9a978f;--line:#e7e5df;--ok:#15803d;--warn:#b45309;--bad:#b91c1c}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#f4f3ef;color:var(--ink);font-family:-apple-system,"Noto Sans TC","PingFang TC",sans-serif;line-height:1.7;padding:0 16px 80px}
+  header{max-width:860px;margin:0 auto;padding:28px 0 8px}
+  header h1{font-size:26px}header p{color:var(--soft);font-size:15px}
+  .steps{max-width:860px;margin:14px auto 22px;display:flex;gap:6px;flex-wrap:wrap}
+  .steps span{flex:1;min-width:110px;font-size:13px;font-weight:600;padding:9px 10px;border-radius:10px;background:#e9e7e1;color:var(--mute);text-align:center;cursor:default}
+  .steps span.on{background:var(--ink);color:#fff}.steps span.done{background:#dcfce7;color:var(--ok);cursor:pointer}
+  .card{max-width:860px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:22px;padding:clamp(20px,4vw,36px)}
+  h2{font-size:22px;margin-bottom:6px}.lead{color:var(--soft);margin-bottom:18px}
+  h3{font-size:16px;margin:22px 0 8px}
+  ol.how{counter-reset:n;list-style:none;display:grid;gap:14px;margin:14px 0}
+  ol.how>li{counter-increment:n;position:relative;padding-left:44px}
+  ol.how>li::before{content:counter(n);position:absolute;left:0;top:1px;width:30px;height:30px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:14px;font-weight:700}
+  ol.how b{font-weight:700}code,.k{font-family:ui-monospace,Consolas,monospace;font-size:.92em;background:#f1f0ec;border-radius:6px;padding:2px 6px}
+  a{color:var(--accent)}
+  label{display:block;font-size:13px;color:var(--soft);margin:14px 0 5px}
+  input,select{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:15px;background:#fff}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  .row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
+  button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:12px 18px;font-size:15px;font-weight:700;background:#f1f0ec;color:var(--ink)}
+  button.primary{background:var(--accent);color:#fff}button:disabled{opacity:.45;cursor:not-allowed}
+  .nav{display:flex;justify-content:space-between;gap:10px;margin-top:26px;flex-wrap:wrap}
+  .msg{margin-top:12px;font-size:14px;min-height:22px}.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}.msg.warn{color:var(--warn)}
+  .copy{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:#f6f9fb;border:1px dashed var(--accent);border-radius:12px;padding:10px 12px;margin:8px 0;font-family:ui-monospace,Consolas,monospace;font-size:14px;word-break:break-all}
+  .copy button{padding:8px 12px;font-size:13px}
+  .notice{border-radius:16px;border:1.5px solid #f59e0b;background:#fffbeb;padding:18px 20px;margin:14px 0}
+  .notice b{display:block;font-size:17px;color:#92400e;margin-bottom:6px}.notice li{margin-left:20px;color:#78350f;font-size:15px}
+  .check{display:flex;gap:12px;align-items:flex-start;margin-top:16px;font-size:15px;color:var(--ink);cursor:pointer}
+  .check input{width:20px;height:20px;margin-top:4px;flex:none}
+  .skip{font-size:14px;color:var(--mute);margin-top:10px}
+  /* 示意圖：照 LINE Developers／Recall 後台的版面畫的簡圖，不是實際截圖 */
+  .shot{margin:10px 0 4px;border:1px solid #d9dde3;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 12px 30px -20px rgba(11,11,13,.35);font-size:13px;color:#1f2937;max-width:620px}
+  .shot .bar{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f3f4f6;border-bottom:1px solid #e5e7eb;color:#6b7280;font-size:12px}
+  .shot .bar i{width:9px;height:9px;border-radius:50%;background:#d1d5db}.shot .bar span{margin-left:6px;background:#fff;border-radius:6px;padding:2px 10px;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .shot .body{padding:14px 16px}
+  .shot .tabs{display:flex;gap:16px;border-bottom:1px solid #e5e7eb;margin:-2px 0 12px;color:#6b7280;font-size:13px}
+  .shot .tabs b{padding:6px 0;font-weight:500}.shot .tabs b.on{color:#06c755;border-bottom:2px solid #06c755;font-weight:700}
+  .shot .f{display:grid;grid-template-columns:150px 1fr;gap:10px;align-items:center;padding:6px 0;border-bottom:1px dashed #eef0f3}
+  .shot .f small{color:#6b7280;font-size:12.5px}.shot .f span{border:1px solid #d1d5db;border-radius:6px;padding:5px 9px;background:#fff;min-height:30px;font-size:12.5px}
+  .shot .hl{outline:2.5px solid #ef4444;outline-offset:2px;border-radius:6px;position:relative}
+  .shot .btn{display:inline-block;background:#06c755;color:#fff;border-radius:6px;padding:6px 14px;font-weight:700;font-size:12.5px}
+  .shot .btn.dark{background:#111827}.pill{display:inline-block;border-radius:100px;padding:2px 10px;font-size:12px;font-weight:700;background:#fee2e2;color:#b91c1c}.pill.g{background:#dcfce7;color:#15803d}
+  .shot .tog{display:inline-block;width:34px;height:18px;border-radius:18px;background:#06c755;position:relative;vertical-align:middle}.shot .tog::after{content:"";position:absolute;right:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#fff}
+  .cap{font-size:12.5px;color:var(--mute);margin-bottom:6px}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><h1>設定精靈</h1><p>照著做，大約 20 分鐘。每一步都會存起來，中途關掉也能回來繼續。</p></header>
+<div class="steps" id="steps"></div>
+
+<main class="card">
+  <!-- 0 使用提醒 -->
+  <section data-step="notice">
+    <h2>開始之前，請先看這一段</h2>
+    <p class="lead">這個工具會把會議資訊做成可以轉傳的卡片，也可以派機器人進會議錄音、做逐字稿和摘要。</p>
+    <div class="notice">
+      <b>請不要未經公司允許，擅自用在公司的客戶會議上。</b>
+      <ul>
+        <li>客戶名單、會議內容、錄音與逐字稿，都有可能屬於公司的機密資產。</li>
+        <li>在公司會議使用前，請先取得主管或公司的同意，並確認符合公司的資安與保密規定。</li>
+        <li>機器人進會議會錄音。請事先告知所有與會者，並遵守當地的法規。</li>
+        <li>逐字稿與摘要會存在你自己架的這台主機上，也會送到你設定的語音轉文字與 AI 服務。請自行評估能不能這樣處理。</li>
+      </ul>
+    </div>
+    <label class="check"><input type="checkbox" id="ack"><span>我了解以上提醒。我會在取得必要的同意之後才使用，並自行負責使用上的後果。</span></label>
+    <div class="nav"><span></span><button class="primary" id="n0" disabled>我了解，開始設定</button></div>
+  </section>
+
+  <!-- 1 密碼 -->
+  <section data-step="password" hidden>
+    <h2>第 1 步　設定後台密碼</h2>
+    <p class="lead">之後進後台都要用這組密碼。請設一組別人猜不到的，至少 10 個字。</p>
+    <div id="pwNew">
+      <label>設定碼（6 位數字）</label>
+      <input id="code" inputmode="numeric" maxlength="6" placeholder="看執行 npm start 的那個視窗" autocomplete="off">
+      <p class="cap">為了避免別人搶先幫你設密碼，設定碼只會顯示在你自己啟動程式的那個視窗裡，長得像「設定碼：123456」。</p>
+      <label>後台密碼</label><input id="pw1" type="password" autocomplete="new-password" placeholder="至少 10 個字">
+      <label>再輸入一次</label><input id="pw2" type="password" autocomplete="new-password">
+    </div>
+    <div id="pwLogin" hidden>
+      <label>已經設定過密碼了，請輸入密碼繼續</label><input id="pw" type="password" autocomplete="current-password">
+    </div>
+    <p class="msg" id="m1"></p>
+    <div class="nav"><button data-back>上一步</button><button class="primary" id="n1">下一步</button></div>
+  </section>
+
+  <!-- 2 網址 -->
+  <section data-step="url" hidden>
+    <h2>第 2 步　確認對外網址</h2>
+    <p class="lead">卡片上的按鈕、LINE 的設定，都要用到你這個服務的網址，而且 LINE 只接受 <b>https</b>。</p>
+    <label>對外網址</label><input id="pub" placeholder="https://你的網址">
+    <p class="cap">我先幫你填了現在瀏覽器上的網址。如果你現在是用 <span class="k">http://localhost</span> 打開的，請先另開一個視窗執行 <span class="k">npx cloudflared tunnel --url http://localhost:3000</span>，把它給的 https 網址貼到這裡，並改用那個網址重新打開這一頁。</p>
+    <p class="msg" id="m2"></p>
+    <div class="nav"><button data-back>上一步</button><button class="primary" id="n2">下一步</button></div>
+  </section>
+
+  <!-- 3 LINE -->
+  <section data-step="line" hidden>
+    <h2>第 3 步　綁定 LINE</h2>
+    <p class="lead">要讓卡片能在 LINE 裡「選人傳送」，需要在 LINE Developers 建立一個 LIFF，再把它的 LIFF ID 貼回來。下面的圖是照 LINE 後台版面畫的示意圖，實際畫面可能因改版略有不同。</p>
+    <ol class="how">
+      <li>打開 <a href="https://developers.line.biz/console/" target="_blank" rel="noopener">LINE Developers Console</a>，用你的 LINE 帳號登入，按 <b>Create a new provider</b>，名稱填公司或自己的名字。
+        <div class="shot"><div class="bar"><i></i><i></i><i></i><span>developers.line.biz/console</span></div><div class="body"><div style="display:flex;justify-content:space-between;align-items:center"><b>Providers</b><span class="btn hl">Create</span></div></div></div></li>
+      <li>在 Provider 裡按 <b>Create a new channel</b>，類型選 <b>LINE Login</b>（不是 Messaging API，這裡最多人選錯）。App types 勾 <b>Web app</b>，其他照實填。
+        <div class="shot"><div class="body"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center"><div class="hl" style="border:1px solid #d1d5db;border-radius:8px;padding:14px 6px"><b>LINE Login</b></div><div style="border:1px solid #d1d5db;border-radius:8px;padding:14px 6px;color:#9ca3af">Messaging API</div><div style="border:1px solid #d1d5db;border-radius:8px;padding:14px 6px;color:#9ca3af">LINE MINI App</div></div></div></div></li>
+      <li>進到剛建好的 channel，點上方的 <b>LIFF</b> 分頁，按 <b>Add</b>，照下面填：
+        <div class="shot"><div class="body"><div class="tabs"><b>Basic settings</b><b>LINE Login</b><b class="on">LIFF</b><b>Roles</b></div>
+          <div class="f"><small>LIFF app name</small><span>會議資訊卡</span></div>
+          <div class="f"><small>Size</small><span>Tall</span></div>
+          <div class="f"><small>Endpoint URL</small><span class="hl" id="epShot">https://你的網址/share.html</span></div>
+          <div class="f"><small>Scopes</small><span>☑ openid　☑ profile</span></div>
+          <div class="f"><small>Add friend option</small><span>Off</span></div>
+          <div style="margin-top:10px"><span class="btn">Add</span></div></div></div>
+        <p class="cap">Endpoint URL 請直接複製這一行（一個字都不能差）：</p>
+        <div class="copy"><span id="ep">—</span><button type="button" data-copy="ep">複製</button></div>
+        <p class="cap">LIFF app name 不能包含「LINE」這個字。</p></li>
+      <li>建好之後，在這個 LIFF 的設定裡找到 <b>Share target picker</b>，把它<b>打開</b>。沒開的話，分享時不會跳出「選擇傳送對象」。
+        <div class="shot"><div class="body"><div class="f hl"><small>Share target picker</small><span style="border:0"><i class="tog"></i>　On</span></div></div></div></li>
+      <li>把列表上的 <b>LIFF ID</b> 複製下來，貼到下面。它長得像 <span class="k">1234567890-AbCdEfGh</span>。
+        <div class="shot"><div class="body"><div class="f"><small>LIFF ID</small><span class="hl">1234567890-AbCdEfGh</span></div><div class="f"><small>LIFF URL</small><span>https://liff.line.me/1234567890-AbCdEfGh</span></div></div></div></li>
+      <li>最後，把 channel 最上方的狀態從 <span class="pill">Developing</span> 改成 <span class="pill g">Published</span>。還在 Developing 的時候，只有你自己打得開，朋友點連結會看到錯誤。（建議先自己測到會動，再改成 Published。）</li>
+    </ol>
+    <label>LIFF ID</label><input id="liff" placeholder="1234567890-AbCdEfGh" autocomplete="off">
+    <p class="msg" id="m3"></p>
+    <div class="nav"><button data-back>上一步</button><button class="primary" id="n3">存起來，下一步</button></div>
+  </section>
+
+  <!-- 4 Recall -->
+  <section data-step="recall" hidden>
+    <h2>第 4 步　會議機器人（可以先跳過）</h2>
+    <p class="lead">想讓機器人自動進 Zoom／Google Meet／Teams 記錄，才需要這一步。只想用資訊卡的話直接跳過。</p>
+    <div class="notice"><b>再提醒一次</b><ul><li>請不要未經公司允許，擅自用在公司的客戶會議上。客戶與會議內容有可能屬於公司的機密資產。</li><li>機器人進會議會錄音，請事先告知所有與會者。</li></ul></div>
+    <ol class="how">
+      <li>到 <a href="https://www.recall.ai" target="_blank" rel="noopener">recall.ai</a> 註冊。自己申請、用多少付多少的帳號在 <b>us-west-2（Pay-as-you-go）</b> 這一區；費用依機器人在會議裡的時數計算，實際價格請看他們官網。</li>
+      <li>登入後打開 API Keys 頁面（選你帳號所在的區域）：
+        <div class="copy"><span id="rk">https://us-west-2.recall.ai/dashboard/developers/api-keys</span><button type="button" data-open="rk">打開</button></div>
+        <div class="shot"><div class="bar"><i></i><i></i><i></i><span>us-west-2.recall.ai/dashboard/developers/api-keys</span></div><div class="body"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><b>API Keys</b><span class="btn dark hl">Generate API Key</span></div><div class="f"><small>my-key</small><span>••••••••••••a1b2</span></div></div></div></li>
+      <li>按 <b>Generate API Key</b>，把整串金鑰複製下來（只會顯示一次），貼到下面，按「測試金鑰」。</li>
+    </ol>
+    <div class="row"><div><label>區域</label><select id="region"></select></div><span></span></div>
+    <div class="row"><div><label>Recall API Key</label><input id="rkey" type="password" autocomplete="off" placeholder="貼上金鑰"></div><button type="button" id="rtest">測試金鑰</button></div>
+    <p class="cap" id="rhint"></p>
+    <p class="msg" id="m4"></p>
+    <div class="nav"><button data-back>上一步</button><span><button id="s4">先跳過</button>　<button class="primary" id="n4">存起來，下一步</button></span></div>
+  </section>
+
+  <!-- 5 AI -->
+  <section data-step="ai" hidden>
+    <h2>第 5 步　AI 會後摘要（可以先跳過）</h2>
+    <p class="lead">有填的話，會議結束後會自動整理重點、完整摘要與待辦事項。沒填就只保留逐字稿。</p>
+    <ol class="how">
+      <li>用 OpenAI 的話，到 <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a> 建立一組金鑰，貼到下面就好，其他兩欄不用動。</li>
+      <li>用其他相容 OpenAI 格式的服務（OpenRouter、自己架的 OneAPI 或 Ollama），把「API 網址」和「模型」改成對應的值。</li>
+    </ol>
+    <label>API Key</label><input id="lkey" type="password" autocomplete="off" placeholder="貼上金鑰">
+    <p class="cap" id="lhint"></p>
+    <div class="row" style="grid-template-columns:1fr 1fr"><div><label>API 網址</label><input id="lbase"></div><div><label>模型</label><input id="lmodel"></div></div>
+    <p class="msg" id="m5"></p>
+    <div class="nav"><button data-back>上一步</button><span><button id="s5">先跳過</button>　<button class="primary" id="n5">存起來，完成</button></span></div>
+  </section>
+
+  <!-- 6 完成 -->
+  <section data-step="done" hidden>
+    <h2>設定完成</h2>
+    <p class="lead">現在可以到後台建立第一場會議，按「複製 LINE 分享連結」，貼到 LINE 用手機點開，就能選人傳送。</p>
+    <ul id="sum" style="list-style:none;display:grid;gap:8px;margin:10px 0 0"></ul>
+    <p class="cap" style="margin-top:14px">之後想改任何一項，隨時回到這一頁（後台右上角的「設定」）。</p>
+    <div class="nav"><button data-back>上一步</button><button class="primary" onclick="location.href='/admin.html'">進入後台</button></div>
+  </section>
+</main>
+
+<script>
+var KEY='lmc_admin_token',TOKEN='',ORDER=['notice','password','url','line','recall','ai','done'],NAMES=['使用提醒','後台密碼','對外網址','綁定 LINE','會議機器人','AI 摘要','完成'],cur=0,S=null;
+function $(id){return document.getElementById(id);}
+function msg(id,t,kind){var e=$(id);e.textContent=t||'';e.className='msg '+(kind||'');}
+function api(method,url,body){return fetch(url,{method:method,headers:{'Content-Type':'application/json','x-admin-token':TOKEN},body:body?JSON.stringify(body):undefined}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||('錯誤 '+r.status));return j;});});}
+function show(i){cur=i;ORDER.forEach(function(n,k){document.querySelector('[data-step="'+n+'"]').hidden=k!==i;});
+  $('steps').innerHTML='';NAMES.forEach(function(n,k){var s=document.createElement('span');s.textContent=(k?k+'　':'')+n;s.className=k===i?'on':(k<i?'done':'');if(k<i)s.onclick=function(){show(k);};$('steps').appendChild(s);});scrollTo({top:0,behavior:'smooth'});}
+function fill(){ if(!S)return; var v=S.settings;
+  $('pub').value=v.PUBLIC_URL.value||location.origin; $('liff').value=v.LIFF_ID.value||'';
+  $('ep').textContent=$('epShot').textContent=S.endpoint_url; $('ack').checked=v.ack_confidential; $('n0').disabled=!$('ack').checked;
+  $('region').innerHTML=S.regions.map(function(r){return '<option'+(r===v.RECALL_REGION.value?' selected':'')+'>'+r+'</option>';}).join('');
+  $('rhint').textContent=v.RECALL_API_KEY.set?('目前已設定（'+v.RECALL_API_KEY.hint+'）。留空＝不變。'+(v.RECALL_API_KEY.locked?' 這一項由 .env 決定，要改請改 .env。':'')):'';
+  $('lhint').textContent=v.LLM_API_KEY.set?('目前已設定（'+v.LLM_API_KEY.hint+'）。留空＝不變。'):'';
+  $('lbase').value=v.LLM_BASE_URL.value; $('lmodel').value=v.LLM_MODEL.value; regionLink(); }
+function regionLink(){ $('rk').textContent='https://'+$('region').value+'.recall.ai/dashboard/developers/api-keys'; }
+function loadSettings(){return api('GET','/api/settings').then(function(j){S=j;fill();return j;});}
+function saveSettings(patch){return api('POST','/api/settings',patch).then(function(j){S.settings=j.settings;S.endpoint_url=j.endpoint_url;S.https=j.https;fill();return j;});}
+
+$('ack').onchange=function(){$('n0').disabled=!this.checked;};
+$('n0').onclick=function(){show(1);};
+$('n1').onclick=function(){ msg('m1','');
+  if(!$('pwLogin').hidden){TOKEN=$('pw').value;loadSettings().then(function(){try{localStorage.setItem(KEY,TOKEN);}catch(e){}return saveSettings({ack_confidential:true});}).then(function(){show(2);}).catch(function(e){msg('m1',e.message,'bad');});return;}
+  if($('pw1').value!==$('pw2').value)return msg('m1','兩次輸入的密碼不一樣','bad');
+  api('POST','/api/setup/password',{setup_code:$('code').value,password:$('pw1').value}).then(function(){TOKEN=$('pw1').value;try{localStorage.setItem(KEY,TOKEN);}catch(e){}return loadSettings();}).then(function(){return saveSettings({ack_confidential:true});}).then(function(){show(2);}).catch(function(e){msg('m1',e.message,'bad');}); };
+$('n2').onclick=function(){ var u=$('pub').value.trim(); saveSettings({PUBLIC_URL:u}).then(function(){ if(!S.https){msg('m2','已存。但這不是 https 網址，LINE 不會接受；本機測試請用上面說的通道。','warn');setTimeout(function(){show(3);},1600);} else show(3); }).catch(function(e){msg('m2',e.message,'bad');}); };
+$('n3').onclick=function(){ saveSettings({LIFF_ID:$('liff').value}).then(function(){ if(!S.settings.LIFF_ID.value)return msg('m3','還沒填 LIFF ID。沒有它就不能分享到 LINE。','bad'); show(4); }).catch(function(e){msg('m3',e.message,'bad');}); };
+$('region').onchange=regionLink;
+$('rtest').onclick=function(){ msg('m4','測試中…'); api('POST','/api/settings/test-recall',{api_key:$('rkey').value,region:$('region').value}).then(function(j){msg('m4',j.ok?'金鑰可以用。':j.reason,j.ok?'ok':'bad');}).catch(function(e){msg('m4',e.message,'bad');}); };
+$('n4').onclick=function(){ var p={RECALL_REGION:$('region').value}; if($('rkey').value.trim())p.RECALL_API_KEY=$('rkey').value.trim(); saveSettings(p).then(function(){$('rkey').value='';show(5);}).catch(function(e){msg('m4',e.message,'bad');}); };
+$('s4').onclick=function(){show(5);};
+$('n5').onclick=function(){ var p={LLM_BASE_URL:$('lbase').value,LLM_MODEL:$('lmodel').value}; if($('lkey').value.trim())p.LLM_API_KEY=$('lkey').value.trim(); saveSettings(p).then(function(){$('lkey').value='';done();}).catch(function(e){msg('m5',e.message,'bad');}); };
+$('s5').onclick=done;
+function done(){ var v=S.settings,rows=[['後台密碼',true,'已設定'],['對外網址',S.https,v.PUBLIC_URL.value+(S.https?'':'（不是 https，LINE 不會接受）')],['綁定 LINE',!!v.LIFF_ID.value,v.LIFF_ID.value||'還沒填'],['會議機器人',v.RECALL_API_KEY.set,v.RECALL_API_KEY.set?'已設定・'+v.RECALL_REGION.value:'未設定（只用資訊卡）'],['AI 摘要',v.LLM_API_KEY.set,v.LLM_API_KEY.set?'已設定・'+v.LLM_MODEL.value:'未設定（只保留逐字稿）']];
+  $('sum').innerHTML='';rows.forEach(function(r){var li=document.createElement('li');li.style.cssText='display:grid;grid-template-columns:110px 1fr;gap:10px;padding:10px 14px;border-radius:12px;background:'+(r[1]?'#f0fdf4':'#f8f7f4');var b=document.createElement('b');b.textContent=r[0];var s=document.createElement('span');s.textContent=r[2];s.style.color=r[1]?'#15803d':'#9a978f';li.append(b,s);$('sum').appendChild(li);});show(6); }
+document.addEventListener('click',function(e){var b=e.target.closest('[data-back]');if(b){show(Math.max(0,cur-1));return;}
+  var c=e.target.closest('[data-copy]');if(c){navigator.clipboard.writeText($(c.dataset.copy).textContent).then(function(){c.textContent='已複製';setTimeout(function(){c.textContent='複製';},1500);});return;}
+  var o=e.target.closest('[data-open]');if(o)open($(o.dataset.open).textContent,'_blank','noopener');});
+
+fetch('/api/config').then(function(r){return r.json();}).then(function(c){ document.documentElement.style.setProperty('--accent',c.accent);
+  $('pwNew').hidden=!c.needs_setup;$('pwLogin').hidden=c.needs_setup; $('pub').value=location.origin;
+  try{TOKEN=localStorage.getItem(KEY)||'';}catch(e){}
+  if(!c.needs_setup&&TOKEN)loadSettings().then(function(){show(S.settings.ack_confidential?(!S.settings.LIFF_ID.value?3:2):0);}).catch(function(){TOKEN='';show(0);}); else show(0); });
+</script>
+</body>
+</html>
