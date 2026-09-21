@@ -28,6 +28,8 @@ npm test          # 單元測試
 npm run smoke     # 前端頁面語法 ＋ 整體自我檢查 ＋ 設定精靈自我檢查（都不用連 LINE）
 ```
 
+動到 `lib/recall.js`、`lib/card.js`、`lib/summary.js` 而且使用者已經設定好金鑰時，再跑 `npm run verify`（會連到真的 Recall／LINE／語言模型；Recall 那一項建的是兩天後才出發的機器人，建完就刪，不產生費用）。
+
 改了卡片版型再加跑 `npm run flex`，把 JSON 給使用者貼到 LINE 的 Flex Message Simulator 預覽。
 沒有跑過這兩個指令，不要說「完成了」。測試失敗就照實說，附上輸出。
 

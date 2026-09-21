@@ -49,6 +49,8 @@
 
 習慣用 `.env` 的人也可以直接設 `RECALL_API_KEY` 與 `RECALL_REGION`，效果一樣。
 
+想確認整條路是通的，執行 `npm run verify`：它會用你的金鑰建一個「兩天後才出發」的機器人，確認 Recall 收我們的格式之後立刻刪掉，不會進任何會議、不會產生費用。
+
 ### 3.（選用）AI 摘要
 
 在設定精靈的最後一步貼上金鑰即可；也可以在 `.env` 設 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`。

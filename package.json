@@ -10,6 +10,7 @@
     "dev": "node --watch server.js",
     "test": "node --test",
     "flex": "node scripts/print-flex.js",
+    "verify": "node scripts/verify-live.js",
     "smoke": "node scripts/check-pages.js && node scripts/smoke.js && node scripts/smoke-setup.js"
   },
   "dependencies": {

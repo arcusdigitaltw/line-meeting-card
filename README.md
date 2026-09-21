@@ -115,6 +115,7 @@ line-meeting-card/
 | `npm run dev` | 啟動，改檔案會自動重啟 |
 | `npm test` | 單元測試（改完 `lib/card.js` 一定要跑） |
 | `npm run smoke` | 整體自我檢查：建會議、拿卡片、行事曆、權限 |
+| `npm run verify` | 連到真的服務實測：Recall 金鑰、Recall 收不收機器人格式（建了就刪、不產生費用）、LINE 官方驗證卡片、AI 摘要 |
 | `npm run flex` | 印出邀請卡 JSON；`npm run flex summary` 印摘要卡 |
 
 ## 安全上要知道的事
