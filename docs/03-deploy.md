@@ -23,6 +23,10 @@ npx cloudflared tunnel --url http://localhost:3000
 
 優點是五分鐘內看得到結果。缺點是電腦要開著，而且每次重開通道網址都會變，已經傳出去的卡片上的按鈕會全部失效。只適合拿來學習和測試。
 
+## 方式一之二：自己的電腦＋自己的網域（Cloudflare Tunnel）
+
+有網域的話，這是最划算的做法：免費、網址固定、自動有 https，不用開 port。完整步驟在 [06-cloudflare-domain.md](06-cloudflare-domain.md)。缺點一樣是電腦要開著。
+
 ## 方式二：雲端平台（Render、Railway、Fly.io、Zeabur 這類）
 
 大致流程都一樣：

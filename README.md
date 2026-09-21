@@ -37,6 +37,7 @@
 | 部署 | 本機加通道先跑起來，再搬到雲端或自己的主機 | [docs/03-deploy.md](docs/03-deploy.md) |
 | 會議機器人 | 用 Recall.ai 派機器人進 Zoom／Meet／Teams、拿逐字稿、做摘要 | [docs/04-meeting-bot.md](docs/04-meeting-bot.md) |
 | Claude Code | 用講的改版型、加欄位、換資料庫 | [docs/05-claude-code.md](docs/05-claude-code.md) |
+| 自己的網域 | 用 Cloudflare Tunnel 把 `https://meet.你的網域` 接到自己的電腦，免費、網址固定 | [docs/06-cloudflare-domain.md](docs/06-cloudflare-domain.md) |
 
 第一次來，照 [docs/01-quick-start.md](docs/01-quick-start.md) 走，大約 30 分鐘可以在自己的 LINE 裡傳出第一張卡。
 
@@ -62,7 +63,7 @@ npm install
 npm start
 ```
 
-啟動後，視窗裡會出現一組 **6 位數的設定碼**。用瀏覽器打開 `http://localhost:3000/setup.html`，照著精靈一步一步做：
+啟動後，視窗裡會出現一組 **6 位數的設定碼**。用瀏覽器打開 `http://localhost:3000/setup.html`，照著精靈一步一步做。先在本機打開就可以設密碼、看畫面；要真的分享到 LINE 才需要 https 網址（有自己的網域看 [docs/06](docs/06-cloudflare-domain.md)）：
 
 1. 閱讀使用提醒
 2. 用設定碼設定後台密碼

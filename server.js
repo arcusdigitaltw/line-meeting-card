@@ -264,10 +264,16 @@ app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] })
 
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(`line-meeting-card 已啟動：${C.publicUrl}（後台 ${C.publicUrl}/admin.html）`);
-    if (!/^https:\/\//.test(C.publicUrl)) console.log('提醒：C.publicUrl 不是 https，LINE 的卡片按鈕與 LIFF 都需要 https。本機測試請搭配 ngrok 或 cloudflared。');
-    if (!config.hasPassword()) console.log(`\n  第一次使用？請用瀏覽器打開 ${C.publicUrl}/setup.html\n  設定碼：${SETUP_CODE}（只會顯示在這個視窗，每次啟動都不一樣）\n`);
-    else if (!C.liffId) console.log(`提醒：還沒綁定 LINE（LIFF ID）。請到 ${C.publicUrl}/setup.html 繼續設定。`);
+    const local = `http://localhost:${PORT}`;
+    const pub = config.get('PUBLIC_URL');
+    const say = (...lines) => console.log(lines.join('\n'));
+    say('', 'line-meeting-card 已啟動', `  在這台電腦上打開：${local}/${config.hasPassword() ? 'admin.html' : 'setup.html'}`);
+    if (pub) say(`  對外網址：${pub}`);
+    if (!config.hasPassword()) say('', '  第一次使用：打開上面那個網址，照設定精靈做。', `  設定碼：${SETUP_CODE}（只會顯示在這個視窗，每次啟動都不一樣）`);
+    else if (!C.liffId) say('', `  還沒綁定 LINE：請打開 ${local}/setup.html 繼續設定。`);
+    if (!pub) say('', '  還沒設定對外網址。可以先在本機設好密碼、看過畫面；要讓 LINE 連得到，需要一個 https 網址：', '  用自己的網域見 docs/06-cloudflare-domain.md，只是想快速試見 docs/01-quick-start.md 的臨時通道。');
+    else if (!/^https:\/\//.test(pub)) say('', '  提醒：對外網址不是 https，LINE 的卡片按鈕與 LIFF 都需要 https。');
+    say('');
     setInterval(() => tick().catch(() => {}), 60000);
   });
 }

@@ -99,7 +99,11 @@
     <h2>第 2 步　確認對外網址</h2>
     <p class="lead">卡片上的按鈕、LINE 的設定，都要用到你這個服務的網址，而且 LINE 只接受 <b>https</b>。</p>
     <label>對外網址</label><input id="pub" placeholder="https://你的網址">
-    <p class="cap">我先幫你填了現在瀏覽器上的網址。如果你現在是用 <span class="k">http://localhost</span> 打開的，請先另開一個視窗執行 <span class="k">npx cloudflared tunnel --url http://localhost:3000</span>，把它給的 https 網址貼到這裡，並改用那個網址重新打開這一頁。</p>
+    <p class="cap">我先幫你填了現在瀏覽器上的網址。</p>
+    <div id="localTip" hidden class="notice" style="border-color:#93c5fd;background:#eff6ff"><b style="color:#1e40af">你現在是用本機網址打開的</b><ul style="color:#1e3a8a">
+      <li>只想先看看畫面、設好密碼：直接按下一步，之後再回來改。</li>
+      <li>要真的分享到 LINE，需要一個 https 網址。有自己的網域，照 <span class="k">docs/06-cloudflare-domain.md</span> 用 Cloudflare 接上（免費、網址固定）。</li>
+      <li>只是想快速試一下：另開一個視窗執行 <span class="k">npx cloudflared tunnel --url http://localhost:3000</span>，把它給的 https 網址貼到上面（這種網址每次重開都會變）。</li></ul></div>
     <p class="msg" id="m2"></p>
     <div class="nav"><button data-back>上一步</button><button class="primary" id="n2">下一步</button></div>
   </section>
@@ -203,7 +207,7 @@ $('n1').onclick=function(){ msg('m1','');
   if(!$('pwLogin').hidden){TOKEN=$('pw').value;loadSettings().then(function(){try{localStorage.setItem(KEY,TOKEN);}catch(e){}return saveSettings({ack_confidential:true});}).then(function(){show(2);}).catch(function(e){msg('m1',e.message,'bad');});return;}
   if($('pw1').value!==$('pw2').value)return msg('m1','兩次輸入的密碼不一樣','bad');
   api('POST','/api/setup/password',{setup_code:$('code').value,password:$('pw1').value}).then(function(){TOKEN=$('pw1').value;try{localStorage.setItem(KEY,TOKEN);}catch(e){}return loadSettings();}).then(function(){return saveSettings({ack_confidential:true});}).then(function(){show(2);}).catch(function(e){msg('m1',e.message,'bad');}); };
-$('n2').onclick=function(){ var u=$('pub').value.trim(); saveSettings({PUBLIC_URL:u}).then(function(){ if(!S.https){msg('m2','已存。但這不是 https 網址，LINE 不會接受；本機測試請用上面說的通道。','warn');setTimeout(function(){show(3);},1600);} else show(3); }).catch(function(e){msg('m2',e.message,'bad');}); };
+$('n2').onclick=function(){ var u=$('pub').value.trim(); saveSettings({PUBLIC_URL:u}).then(function(){ if(!S.https){msg('m2','已存。這不是 https 網址，所以還不能分享到 LINE；其他功能可以先在本機試。','warn');setTimeout(function(){show(3);},1800);} else show(3); }).catch(function(e){msg('m2',e.message,'bad');}); };
 $('n3').onclick=function(){ saveSettings({LIFF_ID:$('liff').value}).then(function(){ if(!S.settings.LIFF_ID.value)return msg('m3','還沒填 LIFF ID。沒有它就不能分享到 LINE。','bad'); show(4); }).catch(function(e){msg('m3',e.message,'bad');}); };
 $('region').onchange=regionLink;
 $('rtest').onclick=function(){ msg('m4','測試中…'); api('POST','/api/settings/test-recall',{api_key:$('rkey').value,region:$('region').value}).then(function(j){msg('m4',j.ok?'金鑰可以用。':j.reason,j.ok?'ok':'bad');}).catch(function(e){msg('m4',e.message,'bad');}); };
@@ -218,7 +222,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('[data-back
   var o=e.target.closest('[data-open]');if(o)open($(o.dataset.open).textContent,'_blank','noopener');});
 
 fetch('/api/config').then(function(r){return r.json();}).then(function(c){ document.documentElement.style.setProperty('--accent',c.accent);
-  $('pwNew').hidden=!c.needs_setup;$('pwLogin').hidden=c.needs_setup; $('pub').value=location.origin;
+  $('localTip').hidden=!/^(localhost|127\.|\[::1\])/.test(location.hostname);$('pwNew').hidden=!c.needs_setup;$('pwLogin').hidden=c.needs_setup; $('pub').value=location.origin;
   try{TOKEN=localStorage.getItem(KEY)||'';}catch(e){}
   if(!c.needs_setup&&TOKEN)loadSettings().then(function(){show(S.settings.ack_confidential?(!S.settings.LIFF_ID.value?3:2):0);}).catch(function(){TOKEN='';show(0);}); else show(0); });
 </script>
