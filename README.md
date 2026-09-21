@@ -104,4 +104,4 @@ line-meeting-card/
 
 MIT。可以自由使用、修改、商用，保留授權聲明即可。
 
-這個專案從 [PersoAI](https://persoai.arcus.tw) 的會議模組獨立出來，由艾酷視數位設計整理開源。
+由葉治皓（Yeh Chih Hao）整理開源。
