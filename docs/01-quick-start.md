@@ -10,9 +10,27 @@
 
 ## 步驟一：把專案跑起來
 
+指令請一行一行貼。
+
 ```bash
 npm install
+```
+
+建立設定檔。Windows 用：
+
+```bash
+copy .env.example .env
+```
+
+Mac／Linux 用：
+
+```bash
 cp .env.example .env
+```
+
+然後跑自我檢查：
+
+```bash
 npm run smoke
 ```
 
@@ -22,14 +40,19 @@ npm run smoke
 
 LINE 只接受 `https` 網址，`http://localhost` 不行。最快的方法是開一條臨時通道：
 
+下面兩個工具選一個就好。
+
 ```bash
-# 二選一
 npx cloudflared tunnel --url http://localhost:3000
-# 或
+```
+
+或是：
+
+```bash
 ngrok http 3000
 ```
 
-它會給你一個 `https://xxxx.trycloudflare.com`（或 `https://xxxx.ngrok-free.app`）的網址。把它填進 `.env`：
+它會給你一個 `https://xxxx.trycloudflare.com`（或 `https://xxxx.ngrok-free.app`）的網址。用記事本打開 `.env`（Windows 打 `notepad .env`，Mac／Linux 打 `nano .env`），把它填進去：
 
 ```
 PUBLIC_URL=https://xxxx.trycloudflare.com

@@ -56,5 +56,6 @@ npm run smoke     # 整體自我檢查（不用連 LINE）
 - **逐字稿斷詞**：Recall 回的是一個一個的 word，中日韓文要直接接起來，英文才加空白（`joinWords()`）。
 - **雲端平台的檔案系統多半是暫時的**：`data/meetings.json` 會在重新部署後消失，要掛持久化磁碟並設 `DATA_FILE`。
 - **Windows 上 `node --test test/` 會失敗**：用不帶路徑的 `node --test`。
+- **教學裡的指令一行一個、不要在同一行後面加 `#` 註解**：很多使用者用 Windows 命令提示字元，`cp` 和 `#` 都會出錯。要給 Windows（`copy`、`notepad`）和 Mac／Linux 兩種寫法。
 
 （發現新的雷請加在這裡：現象、原因、正確做法，各一句話。）

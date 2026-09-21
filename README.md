@@ -45,12 +45,37 @@
 
 ## 快速開始
 
+下面的指令請一行一行貼，不要整段一起貼（Windows 的命令提示字元不認得 `#` 註解）。
+
+**1. 下載與安裝**
+
 ```bash
 git clone https://github.com/arcusdigitaltw/line-meeting-card.git
 cd line-meeting-card
 npm install
-cp .env.example .env      # Windows：copy .env.example .env
-# 編輯 .env，至少填 PUBLIC_URL、LIFF_ID、ADMIN_TOKEN
+```
+
+**2. 建立設定檔 `.env`**
+
+Windows（命令提示字元或 PowerShell）：
+
+```bash
+copy .env.example .env
+notepad .env
+```
+
+Mac／Linux：
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+至少填 `PUBLIC_URL`、`LIFF_ID`、`ADMIN_TOKEN` 三項，存檔。
+
+**3. 啟動**
+
+```bash
 npm start
 ```
 

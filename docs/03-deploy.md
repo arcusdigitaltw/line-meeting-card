@@ -9,9 +9,15 @@
 
 ## 方式一：自己的電腦＋臨時通道（試玩用）
 
+先啟動程式：
+
 ```bash
 npm start
-# 另開一個終端機
+```
+
+再**另開一個終端機視窗**開通道：
+
+```bash
 npx cloudflared tunnel --url http://localhost:3000
 ```
 
